@@ -10,9 +10,6 @@ import numpy as np
 import serial
 import time
 
-
-
-
 #Make object for application
 class App_Window(tk.Tk):
     def __init__(self,parent):
@@ -87,6 +84,7 @@ class App_Window(tk.Tk):
         x = []
         y = []
         self.line1, = a.plot(x,y)
+
         self.canvas = FigureCanvasTkAgg(f, plotFrame)
         self.canvas.show()
         #a.plot([1,2,3,4,5,6,7,8],[5,6,1,3,8,9,3,5])
@@ -197,7 +195,7 @@ class App_Window(tk.Tk):
 
         #Get smallest
 
-        if len(valListA) <= len(valListB):
+        """if len(valListA) <= len(valListB):
         	if len(valListA) <= len(valListC):
         		smallestLen = len(valListA)
         		valListB = valListB[0:smallestLen]
@@ -213,11 +211,30 @@ class App_Window(tk.Tk):
         else:
         	smallestLen = len(valListC)
         	valListB = valListB[0:smallestLen]
-        	valListA = valListA[0:smallestLen]
+        	valListA = valListA[0:smallestLen]"""
+
+        if len(valListA) <= len(valListB):
+            valListB = valListA[0:len(valListA)]
+            if len(valListA) <= len(valListC):
+                valListC = valListC[0:len(valListA)]
+            else:
+                diffC = len(valListA) - len(valListC)
+                for i in range(diffC):
+                    valListC.append(valListC[len(valListC)-1])
+        else:
+            diffB = len(valListA) - len(valListB)
+            for i in range(diffB):
+                valListB.append(valListB[len(valListB)-1])
+            if len(valListA) <= len(valListC):
+                valListC.append(valListC[len(valListC)-1])
+            else:
+                diffC = len(valListA) - len(valListC)
+                for i in range(diffC):
+                    valListC.append(valListC[len(valListC)-1])
+
 
         #Increments to plot your points on are the total time divided by the amount of points
         #inc = totalTime/smallestLen
-
         incA = totalTime/len(valListA)
         #incB = totalTime/len(valListB)
         #incC = totalTime/len(valListC)
@@ -280,17 +297,15 @@ class App_Window(tk.Tk):
         """
         #x = [1,2,3,4,5,6,7,8]
         #y = [5,6,1,3,8,9,3,5]
-        self.refreshFigure(tA,valListA)
+        self.refreshFigure(tA,valListA,valListB,valListC)
     	print("Finished")
 
-    def refreshFigure(self,x,y):
-        #x = [1,2,3,4,5,6,7,8]
-        #y = [5,6,1,3,8,9,3,5]
-        self.line1.set_data(x,y)
+    def refreshFigure(self,xA,yA,yB,yC):
+        self.line1.set_data(xA,yA)
         ax = self.canvas.figure.axes[0]
         ax.grid(True)
-        ax.set_ylim(min(y), max(y))
-        ax.set_xlim(min(x), max(x))
+        ax.set_ylim(min(yA), max(yA))
+        ax.set_xlim(min(xA), max(xA))
         self.canvas.draw()
 
     def OnButtonClick(self):
