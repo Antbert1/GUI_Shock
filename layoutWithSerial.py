@@ -21,90 +21,95 @@ class App_Window(tk.Tk):
         self.initialize()
     def initialize(self):
 
-		#These variables are set at the start to be used later on in the plotting. As long as they are 'in scope' and are set before you try to use them, it doesn't matter where you set them. Being in scope means being declared where you are using them. An example of being out of scope would be if you had a "main" function, and a separate "graph" function that is called inside main. If you declare a variable min_val inside the graph function, and try to use it in the main, it won't work because main can't see it.
-		min_val = 0
-		max_val = 1024
+        #These variables are set at the start to be used later on in the plotting. As long as they are 'in scope' and are set before you try to use them, it doesn't matter where you set them. Being in scope means being declared where you are using them. An example of being out of scope would be if you had a "main" function, and a separate "graph" function that is called inside main. If you declare a variable min_val inside the graph function, and try to use it in the main, it won't work because main can't see it.
+        min_val = 0
+        max_val = 1024
+        print("Test")
 
-		#Prints a line to the terminal asking user to input the port number as 'COMx'. You can check the port number in device manager when the Arduino is plugged in
-		#port = raw_input("Enter the port number (e.g. 'COM4'): \n")
-		port = 'com6'
-		#Creates a variable called 'ser' that we will use to communicate with the serial port. Gives it the port number, the baud rate and timeout (not sure what timeout does but it fixed that 0000s problem)
-		self.ser = serial.Serial(port, 230400, timeout=1)
+        #Prints a line to the terminal asking user to input the port number as 'COMx'. You can check the port number in device manager when the Arduino is plugged in
+        #port = raw_input("Enter the port number (e.g. 'COM4'): \n")
+        port = 'com6'
 
-		#Some commented out stuff experimenting with weird data
-		#ser = serial.Serial('COM4', 9600, timeout=1)
-		self.ser.flush()
+        #Creates a variable called 'ser' that we will use to communicate with the serial port. Gives it the port number, the baud rate and timeout (not sure what timeout does but it fixed that 0000s problem)
+        self.ser = serial.Serial(port, 230400, timeout=1)
 
-		#Sleep tells the programme to wait for x seconds. Useful in serial comms when you want to be sure something has happened
-		time.sleep(3)
-		#This is an empty array of data that will be populated later with the values from the serial port
-		self.valList = []
-		self.startTime = time.time()
-		frame = Frame(self)
-		frame.pack(side="left", fill="both", expand = True)
+        #Some commented out stuff experimenting with weird data
+        #ser = serial.Serial('COM4', 9600, timeout=1)
+        self.ser.flush()
 
-		plotFrame = Frame(self)
-		plotFrame.pack(side="right", fill="both", expand = True)
+        #Sleep tells the programme to wait for x seconds. Useful in serial comms when you want to be sure something has happened
+        time.sleep(3)
+        #This is an empty array of data that will be populated later with the values from the serial port
+        self.valList = []
+        frame = Frame(self)
+        frame.pack(side="left", fill="both", expand = True)
 
-		#Left-hand-side
-		self.l1 = Label(frame, text="Heading Text").grid(row=0,columnspan=2)
+        plotFrame = Frame(self)
+        plotFrame.pack(side="right", fill="both", expand = True)
 
-		self.l2 = Label(frame, text="Name").grid(row=1, sticky=W)
-		self.l3 = Label(frame, text="Clicks (C)").grid(row=3, sticky=W)
-		self.l4 = Label(frame, text="Clicks (R)").grid(row=5, sticky=W)
-		self.l5 = Label(frame, text="Temp").grid(row=7, sticky=W)
-		self.l6 = Label(frame, text="Notes").grid(row=9, sticky=W)
+        #Left-hand-side
+        self.l1 = Label(frame, text="Heading Text").grid(row=0,columnspan=2)
 
-		self.e1 = Entry(frame, width=30)
-		self.e2 = Entry(frame, width=30)
-		self.e3 = Entry(frame, width=30)
-		self.e4 = Entry(frame, width=30)
-		self.e5 = Text(frame,width=23, height=5)
+        self.l2 = Label(frame, text="Name").grid(row=1, sticky=W)
+        self.l3 = Label(frame, text="Clicks (C)").grid(row=3, sticky=W)
+        self.l4 = Label(frame, text="Clicks (R)").grid(row=5, sticky=W)
+        self.l5 = Label(frame, text="Temp").grid(row=7, sticky=W)
+        self.l6 = Label(frame, text="Notes").grid(row=9, sticky=W)
 
-		self.e1.grid(row=2, column=0,sticky=W)
-		self.e2.grid(row=4, column=0,sticky=W)
-		self.e3.grid(row=6, column=0,sticky=W)
-		self.e4.grid(row=8, column=0,sticky=W)
-		self.e5.grid(row=10, column=0,sticky=W)
+        self.e1 = Entry(frame, width=30)
+        self.e2 = Entry(frame, width=30)
+        self.e3 = Entry(frame, width=30)
+        self.e4 = Entry(frame, width=30)
+        self.e5 = Text(frame,width=23, height=5)
 
-		self.btn_text = tk.StringVar()
+        self.e1.grid(row=2, column=0,sticky=W)
+        self.e2.grid(row=4, column=0,sticky=W)
+        self.e3.grid(row=6, column=0,sticky=W)
+        self.e4.grid(row=8, column=0,sticky=W)
+        self.e5.grid(row=10, column=0,sticky=W)
 
-		button = tk.Button(frame,
-		                   textvariable=self.btn_text,
-		                   fg="green",
-		                   command=self.OnButtonClick)
-		self.btn_text.set("Start")
-		button.grid(row=11, column=0,stick=W)
+        self.btn_text = tk.StringVar()
 
-		#button = tk.Button(self,text="Start",command=self.OnButtonClick).pack(side=tk.LEFT,anchor=W)
-		#button = tk.Button(plotFrame,text="Start",command=self.OnButtonClick).grid(row=11, column=0)
-		#Right hand side with Graph
-		Label(plotFrame, text="Graph Stuff heading").pack()
+        button = tk.Button(frame,
+                           textvariable=self.btn_text,
+                           fg="green",
+                           command=self.OnButtonClick)
+        self.btn_text.set("Start")
+        button.grid(row=11, column=0,stick=W)
 
-		f = Figure(figsize=(6,4), dpi=100)
-		a = f.add_subplot(111)
-		x = []
-		y = []
-		self.line1, = a.plot(x,y)
-		self.canvas = FigureCanvasTkAgg(f, plotFrame)
-		self.canvas.show()
-		#a.plot([1,2,3,4,5,6,7,8],[5,6,1,3,8,9,3,5])
-		#canvas = FigureCanvasTkAgg(f, plotFrame)
-		#canvas.show()
-		self.canvas._tkcanvas.pack(side=tk.TOP, fill=tk.NONE, expand=False, anchor=W)
-		self.update
-		toolbar = NavigationToolbar2TkAgg(self.canvas, plotFrame).pack(side=tk.TOP)
-		Label(plotFrame, text="Data One").pack(anchor=W)
-		Label(plotFrame, text="Data Two").pack(anchor=W)
-		Label(plotFrame, text="Data Three").pack(anchor=W)
+        #button = tk.Button(self,text="Start",command=self.OnButtonClick).pack(side=tk.LEFT,anchor=W)
+        #button = tk.Button(plotFrame,text="Start",command=self.OnButtonClick).grid(row=11, column=0)
+        #Right hand side with Graph
+        Label(plotFrame, text="Graph Stuff heading").pack()
+
+        f = Figure(figsize=(6,4), dpi=100)
+        a = f.add_subplot(111)
+        x = []
+        y = []
+        self.line1, = a.plot(x,y)
+        self.canvas = FigureCanvasTkAgg(f, plotFrame)
+        self.canvas.show()
+        #a.plot([1,2,3,4,5,6,7,8],[5,6,1,3,8,9,3,5])
+        #canvas = FigureCanvasTkAgg(f, plotFrame)
+        #canvas.show()
+        self.canvas._tkcanvas.pack(side=tk.TOP, fill=tk.NONE, expand=False, anchor=W)
+        self.update
+        toolbar = NavigationToolbar2TkAgg(self.canvas, plotFrame).pack(side=tk.TOP)
+        Label(plotFrame, text="Data One").pack(anchor=W)
+        Label(plotFrame, text="Data Two").pack(anchor=W)
+        Label(plotFrame, text="Data Three").pack(anchor=W)
 
     def runLoop(self):
+        self.startTime = time.time()
     	startCommand = 'START$'
-    	sendStart = bytes(startCommand.encode('utf-8'))
+    	#sendStart = bytes(startCommand.encode('utf-8'))
+        stopCommand = 'STOP$'
+        #sendStop = bytes(stopCommand.encode('utf-8'))
     	self.ser.write(startCommand)
     	print("START RECORDING")
-    	for i in range(10000):
+    	for i in range(3000):
     		self.valList.append(self.ser.readline())
+        self.ser.write(stopCommand)
 
         endTime = time.time()
         totalTime = endTime - self.startTime
@@ -139,6 +144,57 @@ class App_Window(tk.Tk):
         			valListC.append(int(val.rstrip()))
         		except ValueError:
         			pass
+
+
+        #Open a text file that is writable
+        file = open("testfile.txt","w")
+        for val in self.valList:
+        	#If number is invalid, write a 0
+        	if not val:
+        		file.write('0')
+        	#else write a string representation of the number to the file
+        	else:
+        		file.write(str(val))
+        		#\n means the end of the line. .txt files interpret this
+        		file.write('\n')
+
+
+        #Open a text file that is writable
+        fileA = open("testfileA.txt","w")
+        for val in valListA:
+        	#If number is invalid, write a 0
+        	if not val:
+        		fileA.write('0')
+        	#else write a string representation of the number to the file
+        	else:
+        		fileA.write(str(val))
+        		#\n means the end of the line. .txt files interpret this
+        		fileA.write('\n')
+
+        #Open a text file that is writable
+        fileB = open("testfileB.txt","w")
+        for val in valListB:
+        	#If number is invalid, write a 0
+        	if not val:
+        		fileB.write('0')
+        	#else write a string representation of the number to the file
+        	else:
+        		fileB.write(str(val))
+        		#\n means the end of the line. .txt files interpret this
+        		fileB.write('\n')
+
+        #Open a text file that is writable
+        fileC = open("testfileC.txt","w")
+        for val in valListC:
+        	#If number is invalid, write a 0
+        	if not val:
+        		fileC.write('0')
+        	#else write a string representation of the number to the file
+        	else:
+        		fileC.write(str(val))
+        		#\n means the end of the line. .txt files interpret this
+        		fileC.write('\n')
+
         #Get smallest
 
         if len(valListA) <= len(valListB):
@@ -149,15 +205,15 @@ class App_Window(tk.Tk):
         	else:
         		smallestLen = len(valListC)
         		valListB = valListB[0:smallestLen]
-        		valListA = valListC[0:smallestLen]
+        		valListA = valListA[0:smallestLen]
         elif len(valListB) <= len(valListC):
         	smallestLen = len(valListB)
-        	valListA = valListB[0:smallestLen]
+        	valListA = valListA[0:smallestLen]
         	valListC = valListC[0:smallestLen]
         else:
         	smallestLen = len(valListC)
         	valListB = valListB[0:smallestLen]
-        	valListA = valListC[0:smallestLen]
+        	valListA = valListA[0:smallestLen]
 
         #Increments to plot your points on are the total time divided by the amount of points
         #inc = totalTime/smallestLen
@@ -232,6 +288,7 @@ class App_Window(tk.Tk):
         #y = [5,6,1,3,8,9,3,5]
         self.line1.set_data(x,y)
         ax = self.canvas.figure.axes[0]
+        ax.grid(True)
         ax.set_ylim(min(y), max(y))
         ax.set_xlim(min(x), max(x))
         self.canvas.draw()
