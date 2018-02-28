@@ -25,7 +25,7 @@ class App_Window(tk.Tk):
 
         #Prints a line to the terminal asking user to input the port number as 'COMx'. You can check the port number in device manager when the Arduino is plugged in
         #port = raw_input("Enter the port number (e.g. 'COM4'): \n")
-        port = 'com6'
+        port = 'com5'
 
         #Creates a variable called 'ser' that we will use to communicate with the serial port. Gives it the port number, the baud rate and timeout (not sure what timeout does but it fixed that 0000s problem)
         self.ser = serial.Serial(port, 230400, timeout=1)
@@ -81,9 +81,13 @@ class App_Window(tk.Tk):
 
         f = Figure(figsize=(6,4), dpi=100)
         a = f.add_subplot(111)
+        #b = f.add_subplot(312)
+        #c = f.add_subplot(313)
         x = []
         y = []
-        self.line1, = a.plot(x,y)
+        self.line1, = a.plot(x,y,'g')
+        self.line2, = a.plot(x,y,'r')
+        self.line3, = a.plot(x,y,'b')
 
         self.canvas = FigureCanvasTkAgg(f, plotFrame)
         self.canvas.show()
@@ -193,28 +197,9 @@ class App_Window(tk.Tk):
         		#\n means the end of the line. .txt files interpret this
         		fileC.write('\n')
 
-        #Get smallest
-
-        """if len(valListA) <= len(valListB):
-        	if len(valListA) <= len(valListC):
-        		smallestLen = len(valListA)
-        		valListB = valListB[0:smallestLen]
-        		valListC = valListC[0:smallestLen]
-        	else:
-        		smallestLen = len(valListC)
-        		valListB = valListB[0:smallestLen]
-        		valListA = valListA[0:smallestLen]
-        elif len(valListB) <= len(valListC):
-        	smallestLen = len(valListB)
-        	valListA = valListA[0:smallestLen]
-        	valListC = valListC[0:smallestLen]
-        else:
-        	smallestLen = len(valListC)
-        	valListB = valListB[0:smallestLen]
-        	valListA = valListA[0:smallestLen]"""
 
         if len(valListA) <= len(valListB):
-            valListB = valListA[0:len(valListA)]
+            valListB = valListB[0:len(valListA)]
             if len(valListA) <= len(valListC):
                 valListC = valListC[0:len(valListA)]
             else:
@@ -260,6 +245,8 @@ class App_Window(tk.Tk):
             np.savetxt(datafile_id, dataSave, fmt=['%s','%s','%s','%f'])
             #here the ascii file is written."""
 
+        F = open(dataFilePath,'a')
+        F.write("DETAILS")
         """
         plt.subplot(311)
         #Print the length of the valList to see how many got
@@ -301,10 +288,21 @@ class App_Window(tk.Tk):
     	print("Finished")
 
     def refreshFigure(self,xA,yA,yB,yC):
+        #Leave max and min at 0 and 1024
+        print (min(yA))
+        print (max(yA))
+        #minY = min([min(yA), min(yB), min(yC)])
+        #maxY = max([max(yA), max(yB), max(yC)])
+        minY = 0
+        maxY = 1024
         self.line1.set_data(xA,yA)
+        self.line2.set_data(xA,yB)
+        self.line3.set_data(xA,yC)
         ax = self.canvas.figure.axes[0]
         ax.grid(True)
-        ax.set_ylim(min(yA), max(yA))
+        #ax.set_ylim(min(yA), max(yA))
+        #ax.set_xlim(min(xA), max(xA))
+        ax.set_ylim(minY, maxY)
         ax.set_xlim(min(xA), max(xA))
         self.canvas.draw()
 
