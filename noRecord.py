@@ -4,6 +4,7 @@ matplotlib.use('TKAgg')
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
 from matplotlib.figure import Figure
 import matplotlib.pyplot as pltlib
+import matplotlib.ticker as plticker
 import Tkinter as tk
 from Tkinter import *
 import numpy as np
@@ -162,7 +163,6 @@ class App_Window(tk.Tk):
         #inc = totalTime/smallestLen
         totalTime = 2.0
         incA = totalTime/float(len(valListA))
-        print totalTime/len(valListA)
         #incB = totalTime/len(valListB)
         #incC = totalTime/len(valListC)
 
