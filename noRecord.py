@@ -5,11 +5,19 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolb
 from matplotlib.figure import Figure
 import matplotlib.pyplot as pltlib
 import matplotlib.ticker as plticker
+from matplotlib.ticker import MultipleLocator
 import Tkinter as tk
 from Tkinter import *
 import numpy as np
 import serial
+import os
 import time
+from datetime import datetime
+
+#Create path for saving files
+appDataPath = os.getenv('LOCALAPPDATA') + '\\shockData\\'
+if not os.path.exists(appDataPath):
+    os.makedirs(appDataPath)
 
 #Make object for application
 class App_Window(tk.Tk):
@@ -54,7 +62,11 @@ class App_Window(tk.Tk):
         self.l5 = Label(frame, text="Temp").grid(row=7, sticky=W)
         self.l6 = Label(frame, text="Notes").grid(row=9, sticky=W)
 
-        self.e1 = Entry(frame, width=30)
+        defaultName = tk.StringVar(frame, value='Timestamp')
+
+        #Put timestamp as default value and clear it when clicked
+        self.e1 = Entry(frame, width=30, textvariable=defaultName)
+        self.e1.bind("<Button-1>", self.clearText)
         self.e2 = Entry(frame, width=30)
         self.e3 = Entry(frame, width=30)
         self.e4 = Entry(frame, width=30)
@@ -109,6 +121,10 @@ class App_Window(tk.Tk):
         Label(plotFrame, text="Data Two").pack(anchor=W)
         Label(plotFrame, text="Data Three").pack(anchor=W)
 
+    def clearText(self, event):
+        self.e1.delete(0, "end")
+        return None
+
     def resetGraph(self):
         self.clearGraph()
 
@@ -128,13 +144,23 @@ class App_Window(tk.Tk):
         self.canvas.draw()
 
     def runLoop(self):
+        fileName = self.e1.get()
+        timeStampUnsplit = str(datetime.now())[0:19].split(' ')
+        timeStamp = (timeStampUnsplit[0] + 'T' + timeStampUnsplit[1] + '.txt').replace(':', '-')
+        print timeStamp
+        if (len(fileName) == 0 or fileName == 'Timestamp'):
+            fileName = timeStamp
+        else:
+            fileName = fileName + '.txt'
+
+        #self.e2.get()
+        #print self.e3.get()
         self.startTime = time.time()
     	startCommand = 'START$'
     	#sendStart = bytes(startCommand.encode('utf-8'))
         stopCommand = 'STOP$'
         #sendStop = bytes(stopCommand.encode('utf-8'))
     	#self.ser.write(startCommand)
-
         fA = open('Test Results 1/testFileA.txt', 'r')
         fLinesA = fA.read().split('\n')
         valListA = []
@@ -156,9 +182,31 @@ class App_Window(tk.Tk):
             if cLine.strip():
                 valListC.append(int(cLine))
 
-        print len(valListA)
-        print len(valListB)
-        print len(valListC)
+        #Calculate the time difference between peak and trough in A
+
+        #First peak
+        countStart = 0
+        for i in range(len(valListA) - 1):
+            if countStart > 20:
+                firstIndex = i - 20
+                firstVal = valListA[i-20]
+                break
+            if (valListA[i+1] < valListA[i]):
+                countStart = countStart+1
+            else:
+                countStart = 0
+
+        #First trough after peak
+        for j in range(firstIndex, len(valListA)-1):
+            if (valListA[j] < valListA[j+1]):
+                endIndex = j
+                lastVal = valListA[j]
+                break
+
+        print("End index " + str(endIndex))
+        print("Value " + str(lastVal))
+
+
         #Increments to plot your points on are the total time divided by the amount of points
         #inc = totalTime/smallestLen
         totalTime = 2.0
@@ -169,6 +217,9 @@ class App_Window(tk.Tk):
         tA= np.arange(0.0, totalTime, incA)
         #tB= np.arange(0.0, totalTime, incB)
         #tC= np.arange(0.0, totalTime, incC)
+        print("Time between peak and trough is " + str(tA[endIndex] - tA[firstIndex]))
+        print("Time start " + str(tA[firstIndex]))
+        print("Time end " + str(tA[endIndex])) 
 
         valListASave = np.array(valListA)
         valListBSave = np.array(valListB)
@@ -179,15 +230,17 @@ class App_Window(tk.Tk):
         dataSave = dataSave.T
         #Open a text file that is writable
 
-        dataFilePath = "dataSave.txt"
-
-        with open(dataFilePath, 'w+') as datafile_id:
+        dataFilePath = "\dataSave.txt"
+        fullPath = appDataPath + fileName
+        #with open(dataFilePath, 'w+') as datafile_id:
+        with open(fullPath, 'w+') as datafile_id:
         #here you open the ascii file
 
             np.savetxt(datafile_id, dataSave, fmt=['%s','%s','%s','%f'])
             #here the ascii file is written."""
 
-        F = open(dataFilePath,'a')
+        #F = open(dataFilePath,'a')
+        F = open(fullPath,'a')
         F.write("DETAILS")
 
         #x = [1,2,3,4,5,6,7,8]
@@ -196,6 +249,10 @@ class App_Window(tk.Tk):
     	print("Finished")
 
     def refreshFigure(self,xA,yA,yB,yC):
+        spacing = 0.1
+        spacingy = 80
+        minorLocator = MultipleLocator(spacing)
+        minorLocatory = MultipleLocator(spacingy)
         #Leave max and min at 0 and 1024
         print (min(yA))
         print (max(yA))
@@ -207,7 +264,13 @@ class App_Window(tk.Tk):
         self.line2.set_data(xA,yB)
         self.line3.set_data(xA,yC)
         ax = self.canvas.figure.axes[0]
-        ax.grid(True)
+
+        ax.yaxis.set_minor_locator(minorLocatory)
+        ax.xaxis.set_minor_locator(minorLocator)
+        # Set grid to use minor tick locations.
+        ax.grid(which = 'minor')
+
+        #ax.grid(True)
         #ax.set_ylim(min(yA), max(yA))
         #ax.set_xlim(min(xA), max(xA))
         ax.set_ylim(minY, maxY)
