@@ -28,11 +28,11 @@ class App_Window(tk.Tk):
         port = 'com5'
 
         #Creates a variable called 'ser' that we will use to communicate with the serial port. Gives it the port number, the baud rate and timeout (not sure what timeout does but it fixed that 0000s problem)
-        self.ser = serial.Serial(port, 230400, timeout=1)
+        #self.ser = serial.Serial(port, 230400, timeout=1)
 
         #Some commented out stuff experimenting with weird data
         #ser = serial.Serial('COM4', 9600, timeout=1)
-        self.ser.flush()
+        #self.ser.flush()
 
         #Sleep tells the programme to wait for x seconds. Useful in serial comms when you want to be sure something has happened
         time.sleep(3)
@@ -74,13 +74,20 @@ class App_Window(tk.Tk):
         self.btn_text.set("Start")
         button.grid(row=11, column=0,stick=W)
 
+        self.btn_text2 = tk.StringVar()
+        button2 = tk.Button(frame,
+                           textvariable=self.btn_text2,
+                           command=self.resetGraph)
+        self.btn_text2.set("Reset")
+        button2.grid(row=12, column=0,stick=W)
+
         #button = tk.Button(self,text="Start",command=self.OnButtonClick).pack(side=tk.LEFT,anchor=W)
         #button = tk.Button(plotFrame,text="Start",command=self.OnButtonClick).grid(row=11, column=0)
         #Right hand side with Graph
         Label(plotFrame, text="Graph Stuff heading").pack()
 
-        f = Figure(figsize=(6,4), dpi=100)
-        a = f.add_subplot(111)
+        self.f = Figure(figsize=(6,4), dpi=100)
+        a = self.f.add_subplot(111)
         #b = f.add_subplot(312)
         #c = f.add_subplot(313)
         x = []
@@ -89,7 +96,7 @@ class App_Window(tk.Tk):
         self.line2, = a.plot(x,y,'r')
         self.line3, = a.plot(x,y,'b')
 
-        self.canvas = FigureCanvasTkAgg(f, plotFrame)
+        self.canvas = FigureCanvasTkAgg(self.f, plotFrame)
         self.canvas.show()
         #a.plot([1,2,3,4,5,6,7,8],[5,6,1,3,8,9,3,5])
         #canvas = FigureCanvasTkAgg(f, plotFrame)
@@ -101,126 +108,61 @@ class App_Window(tk.Tk):
         Label(plotFrame, text="Data Two").pack(anchor=W)
         Label(plotFrame, text="Data Three").pack(anchor=W)
 
+    def resetGraph(self):
+        self.clearGraph()
+
+    def clearGraph(self):
+        print "reset"
+
+        self.line1.set_data([],[])
+        self.line2.set_data([],[])
+        self.line3.set_data([],[])
+        ax = self.canvas.figure.axes[0]
+        ax.grid(False)
+
+        #ax.set_ylim(min(yA), max(yA))
+        #ax.set_xlim(min(xA), max(xA))
+        #ax.set_ylim(0, 1024)
+        #ax.set_xlim(0, 2)
+        self.canvas.draw()
+
     def runLoop(self):
         self.startTime = time.time()
     	startCommand = 'START$'
     	#sendStart = bytes(startCommand.encode('utf-8'))
         stopCommand = 'STOP$'
         #sendStop = bytes(stopCommand.encode('utf-8'))
-    	self.ser.write(startCommand)
-    	print("START RECORDING")
-    	for i in range(3000):
-    		self.valList.append(self.ser.readline())
-        self.ser.write(stopCommand)
+    	#self.ser.write(startCommand)
 
-        endTime = time.time()
-        totalTime = endTime - self.startTime
-        #Split valList into 3 lists
+        fA = open('Test Results 1/testFileA.txt', 'r')
+        fLinesA = fA.read().split('\n')
         valListA = []
+        for aLine in fLinesA:
+            if aLine.strip():
+                valListA.append(int(aLine))
+
+        fB = open('Test Results 1/testFileB.txt', 'r')
+        fLinesB = fB.read().split('\n')
         valListB = []
+        for bLine in fLinesB:
+            if bLine.strip():
+                valListB.append(int(bLine))
+
+        fC = open('Test Results 1/testFileC.txt', 'r')
+        fLinesC = fC.read().split('\n')
         valListC = []
+        for cLine in fLinesC:
+            if cLine.strip():
+                valListC.append(int(cLine))
 
-        for val in self.valList:
-        	#print(val)
-        	if val[0] == 'a':
-        		modVal = val[1:]
-        		try:
-        			float(modVal)
-        			#countA += 1
-        			valListA.append(int(modVal.rstrip()))
-        		except ValueError:
-        			pass
-        			#break
-        	elif val[0] == 'b':
-        		modVal = val[1:]
-        		try:
-        			float(modVal)
-        			#countB += 1
-        			valListB.append(int(modVal.rstrip()))
-        		except ValueError:
-        			pass
-        	else:
-        		try:
-        			float(val)
-        			#countC += 1
-        			valListC.append(int(val.rstrip()))
-        		except ValueError:
-        			pass
-
-
-        #Open a text file that is writable
-        file = open("testfile.txt","w")
-        for val in self.valList:
-        	#If number is invalid, write a 0
-        	if not val:
-        		file.write('0')
-        	#else write a string representation of the number to the file
-        	else:
-        		file.write(str(val))
-        		#\n means the end of the line. .txt files interpret this
-        		file.write('\n')
-
-
-        #Open a text file that is writable
-        fileA = open("testfileA.txt","w")
-        for val in valListA:
-        	#If number is invalid, write a 0
-        	if not val:
-        		fileA.write('0')
-        	#else write a string representation of the number to the file
-        	else:
-        		fileA.write(str(val))
-        		#\n means the end of the line. .txt files interpret this
-        		fileA.write('\n')
-
-        #Open a text file that is writable
-        fileB = open("testfileB.txt","w")
-        for val in valListB:
-        	#If number is invalid, write a 0
-        	if not val:
-        		fileB.write('0')
-        	#else write a string representation of the number to the file
-        	else:
-        		fileB.write(str(val))
-        		#\n means the end of the line. .txt files interpret this
-        		fileB.write('\n')
-
-        #Open a text file that is writable
-        fileC = open("testfileC.txt","w")
-        for val in valListC:
-        	#If number is invalid, write a 0
-        	if not val:
-        		fileC.write('0')
-        	#else write a string representation of the number to the file
-        	else:
-        		fileC.write(str(val))
-        		#\n means the end of the line. .txt files interpret this
-        		fileC.write('\n')
-
-
-        if len(valListA) <= len(valListB):
-            valListB = valListB[0:len(valListA)]
-            if len(valListA) <= len(valListC):
-                valListC = valListC[0:len(valListA)]
-            else:
-                diffC = len(valListA) - len(valListC)
-                for i in range(diffC):
-                    valListC.append(valListC[len(valListC)-1])
-        else:
-            diffB = len(valListA) - len(valListB)
-            for i in range(diffB):
-                valListB.append(valListB[len(valListB)-1])
-            if len(valListA) <= len(valListC):
-                valListC.append(valListC[len(valListC)-1])
-            else:
-                diffC = len(valListA) - len(valListC)
-                for i in range(diffC):
-                    valListC.append(valListC[len(valListC)-1])
-
-
+        print len(valListA)
+        print len(valListB)
+        print len(valListC)
         #Increments to plot your points on are the total time divided by the amount of points
         #inc = totalTime/smallestLen
-        incA = totalTime/len(valListA)
+        totalTime = 2.0
+        incA = totalTime/float(len(valListA))
+        print totalTime/len(valListA)
         #incB = totalTime/len(valListB)
         #incC = totalTime/len(valListC)
 
@@ -247,41 +189,7 @@ class App_Window(tk.Tk):
 
         F = open(dataFilePath,'a')
         F.write("DETAILS")
-        """
-        plt.subplot(311)
-        #Print the length of the valList to see how many got
-        #print(len(valList))
-        plt.plot(tA, valListA,'r')
-        #plt.subplot(312)
-        #plt.plot(tB, valListB,'g')
-        incrementY = int((max(valListA) - min(valListA))/20)
-        #plt.yticks(np.arange(min(valListA), max(valListA)+1, incrementY))
 
-        plt.subplot(312)
-        #Print the length of the valList to see how many got
-        #print(len(valList))
-        plt.plot(tA, valListB,'g')
-        #plt.subplot(312)
-        #plt.plot(tB, valListB,'g')
-        incrementY = int((max(valListB) - min(valListB))/20)
-        #plt.yticks(np.arange(min(valListB), max(valListB)+1, incrementY))
-
-
-        plt.subplot(313)
-        #Print the length of the valList to see how many got
-        #print(len(valList))
-        plt.plot(tA, valListC,'b')
-        #plt.subplot(312)
-        #plt.plot(tB, valListB,'g')
-        incrementY = int((max(valListC) - min(valListC))/20)
-        #plt.yticks(np.arange(min(valListC), max(valListC)+1, incrementY))
-
-        #plt.subplot(313)
-        #plt.plot(tC, valListC,'b')
-        #plt.ylim((1,1023))
-        #Show plot
-        plt.show()
-        """
         #x = [1,2,3,4,5,6,7,8]
         #y = [5,6,1,3,8,9,3,5]
         self.refreshFigure(tA,valListA,valListB,valListC)
@@ -308,16 +216,6 @@ class App_Window(tk.Tk):
 
     def OnButtonClick(self):
     	self.runLoop()
-    	"""if self.btn_text.get() == "Start":
-    	    self.btn_text.set("Stop")
-    	else:
-    	    self.btn_text.set("Start")
-    	    self.e1.delete(0,END)
-    	    self.e2.delete(0,END)
-    	    self.e3.delete(0,END)
-    	    self.e4.delete(0,END)
-    	    self.e5.delete('1.0',END)
-    	self.refreshFigure()"""
 
 
 if __name__ == "__main__":
