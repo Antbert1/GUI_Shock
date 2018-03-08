@@ -105,7 +105,9 @@ class App_Window(tk.Tk):
         #c = f.add_subplot(313)
         x = []
         y = []
+
         self.line1, = a.plot(x,y,'g')
+        self.dots, = a.plot(x,y, marker='o', markersize=3, color="red")
         self.line2, = a.plot(x,y,'r')
         self.line3, = a.plot(x,y,'b')
 
@@ -132,6 +134,7 @@ class App_Window(tk.Tk):
         print "reset"
 
         self.line1.set_data([],[])
+        self.dots.set_data([],[])
         self.line2.set_data([],[])
         self.line3.set_data([],[])
         ax = self.canvas.figure.axes[0]
@@ -183,28 +186,66 @@ class App_Window(tk.Tk):
                 valListC.append(int(cLine))
 
         #Calculate the time difference between peak and trough in A
-
         #First peak
-        countStart = 0
+        countStartPtT = 0
         for i in range(len(valListA) - 1):
-            if countStart > 20:
-                firstIndex = i - 20
-                firstVal = valListA[i-20]
+            if countStartPtT > 20:
+                firstIndexPtT = i - 20
+                firstValPtT = valListA[i-20]
                 break
             if (valListA[i+1] < valListA[i]):
-                countStart = countStart+1
+                countStartPtT = countStartPtT+1
             else:
-                countStart = 0
+                countStartPtT = 0
 
         #First trough after peak
-        for j in range(firstIndex, len(valListA)-1):
+        for j in range(firstIndexPtT, len(valListA)-1):
             if (valListA[j] < valListA[j+1]):
-                endIndex = j
-                lastVal = valListA[j]
+                endIndexPtT = j
+                lastValPtT = valListA[j]
                 break
 
-        print("End index " + str(endIndex))
-        print("Value " + str(lastVal))
+        #Calculate time difference between trough to peak
+        #countStartTtP = 0
+        for i in range(endIndexPtT, len(valListA) - 10):
+            if (valListA[i+10] - valListA[i] > 10):
+                firstIndexTtP = i;
+                firstValTtP = valListA[i]
+                break
+
+        flatArrayVals = []
+
+        for j in range(firstIndexTtP, len(valListA) - 10):
+            if (valListA[j+10] - valListA[j] < 10):
+                startOfFlat = j
+                for k in range(20):
+                    flatArrayVals.append(valListA[j+k])
+                break
+
+        for i in range(10):
+            if (flatArrayVals[i+10] - flatArrayVals[i] < 3):
+                endIndexTtP = startOfFlat+i
+                endValTtP = valListA[endIndexTtP]
+
+        print("Index peak to trough: " + str((float(firstIndexPtT)*2/1000)))
+        print("Value peak to trough: " + str(firstValPtT))
+        print("End Index peak to trough: " + str((float(endIndexPtT)*2)/1000))
+        print("End Value peak to trough: " + str(lastValPtT))
+
+        print("Index trough to peak: " + str((float(firstIndexTtP)*2)/1000))
+        print("Value trough to peak: " + str(firstValTtP))
+        print("Index END trough to peak: " + str((float(endIndexTtP)*2)/1000))
+        print("Value END trough to peak: " + str(endValTtP))
+
+        #First peak after trough
+        """for j in range(firstIndexTtP, len(valListA)-1):
+            if (valListA[j] < valListA[j+1]):
+                endIndexTtP = j
+                lastValTtP = valListA[j]
+                break"""
+
+        #print("End index " + str(endIndexPtT))
+        #print("Value " + str(lastValPtT))
 
 
         #Increments to plot your points on are the total time divided by the amount of points
@@ -217,9 +258,9 @@ class App_Window(tk.Tk):
         tA= np.arange(0.0, totalTime, incA)
         #tB= np.arange(0.0, totalTime, incB)
         #tC= np.arange(0.0, totalTime, incC)
-        print("Time between peak and trough is " + str(tA[endIndex] - tA[firstIndex]))
-        print("Time start " + str(tA[firstIndex]))
-        print("Time end " + str(tA[endIndex])) 
+        #print("Time between peak and trough is " + str(tA[endIndex] - tA[firstIndex]))
+        #print("Time start " + str(tA[firstIndex]))
+        #print("Time end " + str(tA[endIndex]))
 
         valListASave = np.array(valListA)
         valListBSave = np.array(valListB)
@@ -245,10 +286,10 @@ class App_Window(tk.Tk):
 
         #x = [1,2,3,4,5,6,7,8]
         #y = [5,6,1,3,8,9,3,5]
-        self.refreshFigure(tA,valListA,valListB,valListC)
+        self.refreshFigure(tA,valListA,valListB,valListC,firstIndexPtT,firstValPtT)
     	print("Finished")
 
-    def refreshFigure(self,xA,yA,yB,yC):
+    def refreshFigure(self,xA,yA,yB,yC,indexA,valA):
         spacing = 0.1
         spacingy = 80
         minorLocator = MultipleLocator(spacing)
@@ -260,9 +301,12 @@ class App_Window(tk.Tk):
         #maxY = max([max(yA), max(yB), max(yC)])
         minY = 0
         maxY = 1024
+        #self.dots, = a.plot(firstIndexPtT, firstValPtT, marker='o', markersize=3, color="red")
+        self.dots.set_data(indexA, valA)
         self.line1.set_data(xA,yA)
         self.line2.set_data(xA,yB)
         self.line3.set_data(xA,yC)
+
         ax = self.canvas.figure.axes[0]
 
         ax.yaxis.set_minor_locator(minorLocatory)
