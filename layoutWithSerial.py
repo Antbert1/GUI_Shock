@@ -25,7 +25,7 @@ class App_Window(tk.Tk):
 
         #Prints a line to the terminal asking user to input the port number as 'COMx'. You can check the port number in device manager when the Arduino is plugged in
         #port = raw_input("Enter the port number (e.g. 'COM4'): \n")
-        port = 'com5'
+        port = 'com6'
 
         #Creates a variable called 'ser' that we will use to communicate with the serial port. Gives it the port number, the baud rate and timeout (not sure what timeout does but it fixed that 0000s problem)
         self.ser = serial.Serial(port, 230400, timeout=1)
