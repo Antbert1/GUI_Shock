@@ -19,7 +19,8 @@ appDataPath = os.getenv('LOCALAPPDATA') + '\\shockData\\'
 if not os.path.exists(appDataPath):
     os.makedirs(appDataPath)
 
-
+#Give option for test data or real data
+testFlag = input("Test? 1 for yes, 0 for no. ")
 #These variables are set at the start to be used later on in the plotting. As long as they are 'in scope' and are set before you try to use them, it doesn't matter where you set them. Being in scope means being declared where you are using them. An example of being out of scope would be if you had a "main" function, and a separate "graph" function that is called inside main. If you declare a variable min_val inside the graph function, and try to use it in the main, it won't work because main can't see it.
 min_val = 0
 max_val = 1024
@@ -28,66 +29,163 @@ max_val = 1024
 #port = raw_input("Enter the port number (e.g. 'COM4'): \n")
 port = 'com6'
 
-#Creates a variable called 'ser' that we will use to communicate with the serial port. Gives it the port number, the baud rate and timeout (not sure what timeout does but it fixed that 0000s problem)
-ser = serial.Serial(port, 230400, timeout=1)
-
-#Some commented out stuff experimenting with weird data
-#ser = serial.Serial('COM4', 9600, timeout=1)
-ser.flush()
-
-#Sleep tells the programme to wait for x seconds. Useful in serial comms when you want to be sure something has happened
-time.sleep(3)
 #This is an empty array of data that will be populated later with the values from the serial port
 valList = []
 
-def runLoop(fileName):
+def writeToFile(valListA, valListB, valListC):
+    valFiles = ["testfileA.txt", "testfileB.txt", "testfileC.txt"]
+    valLists = [valListA, valListB, valListC]
 
+    for index, file in enumerate(valFiles):
+        valFile = open(file, "w")
+        for val in valLists[index]:
+            if not val:
+                valFile.write('0 \n')
+            else:
+        		valFile.write(str(val))
+        		#\n means the end of the line. .txt files interpret this
+        		valFile.write('\n')
 
-    #TEMPORARY - Use to test data
-    startTime = time.time()
-    startCommand = 'START$'
-    #sendStart = bytes(startCommand.encode('utf-8'))
-    stopCommand = 'STOP$'
-    #sendStop = bytes(stopCommand.encode('utf-8'))
-    ser.write(startCommand)
-    print("START RECORDING")
-    for i in range(3000):
-        valList.append(ser.readline())
-    ser.write(stopCommand)
-
-    endTime = time.time()
-    totalTime = endTime - startTime
-    #Split valList into 3 lists
+def testData():
+    fA = open('Test Results 1/testFileA.txt', 'r')
+    fLinesA = fA.read().split('\n')
     valListA = []
-    valListB = []
-    valListC = []
+    for aLine in fLinesA:
+        if aLine.strip():
+            valListA.append(int(aLine))
 
-    for val in valList:
-        #print(val)
-        if val[0] == 'a':
-            modVal = val[1:]
-            try:
-                float(modVal)
-                #countA += 1
-                valListA.append(int(modVal.rstrip()))
-            except ValueError:
-                pass
-                #break
-        elif val[0] == 'b':
-            modVal = val[1:]
-            try:
-                float(modVal)
-                #countB += 1
-                valListB.append(int(modVal.rstrip()))
-            except ValueError:
-                pass
-        else:
-            try:
-                float(val)
-                #countC += 1
-                valListC.append(int(val.rstrip()))
-            except ValueError:
-                pass
+    fB = open('Test Results 1/testFileB.txt', 'r')
+    fLinesB = fB.read().split('\n')
+    valListB = []
+    for bLine in fLinesB:
+        if bLine.strip():
+            valListB.append(int(bLine))
+
+    fC = open('Test Results 1/testFileC.txt', 'r')
+    fLinesC = fC.read().split('\n')
+    valListC = []
+    for cLine in fLinesC:
+        if cLine.strip():
+            valListC.append(int(cLine))
+
+    return [valListA, valListB, valListC]
+
+def numberTest(value, totalTime, sampleLength):
+    #Check for test or not to use time values
+    if testFlag == 0:
+        totalTime = 2
+        sampleLength = 1000
+
+    try:
+        newVal = float(value)*totalTime/1000
+        #newVal = float(value)*5/2334
+    except:
+        newVal = None
+    return newVal
+
+def peaksTroughs(valListA, totalTime):
+    maxVal = max(valListA)
+    maxVals = []
+    for i in range(len(valListA)):
+        if (valListA[i] > maxVal-5) and (valListA[i] < maxVal+5):
+            maxVals.append([numberTest(i, totalTime, len(valListA)), valListA[i]])
+
+    #Only do this if maxVals is valid
+    if len(maxVals) > 1:
+        for j in range(len(maxVals)-1):
+            if maxVals[j+1][0] - maxVals[j][0] > 0.1:
+                firstMax = maxVals[j]
+                nextMax = maxVals[j+1]
+                break
+    try:
+        firstMax
+    except NameError:
+        firstMax = [None, None]
+    try:
+        nextMax
+    except NameError:
+        nextMax = [None, None]
+
+    minVal = min(valListA)
+    minVals = []
+    for i in range(len(valListA)):
+        if (valListA[i] > minVal-5) and (valListA[i] < minVal+5):
+            minVals.append([numberTest(i, totalTime, len(valListA)), valListA[i]])
+
+    if len(minVals) > 1 and firstMax[0] != None:
+        for j in range(len(minVals)):
+            if minVals[j][0] > firstMax[0]:
+                firstMin = minVals[j]
+                break
+
+        for k in range(len(minVals)):
+            if minVals[k][0] > nextMax[0]:
+                nextMin = minVals[k-1]
+                break
+    else:
+        firstMin = [None, None]
+        nextMin = [None, None]
+
+    return [firstMax, nextMax, firstMin, nextMin]
+
+def runLoop(fileName):
+    if testFlag == 1:
+        ser = serial.Serial(port, 230400, timeout=1)
+        #Need to give 3 seconds to activate
+        time.sleep(3)
+
+    valList = []
+    startTime = time.time()
+
+    if testFlag == 1:
+        startCommand = 'START$'
+        #sendStart = bytes(startCommand.encode('utf-8'))
+        stopCommand = 'STOP$'
+        #sendStop = bytes(stopCommand.encode('utf-8'))
+        ser.write(startCommand)
+        print("START RECORDING")
+        for i in range(7000):
+            valList.append(ser.readline())
+        ser.write(stopCommand)
+
+        endTime = time.time()
+        totalTime = endTime - startTime
+        print("Total time is " + str(totalTime))
+
+        #Split valList into 3 lists
+        valListA = []
+        valListB = []
+        valListC = []
+
+        #Split up values into three lists
+        for val in valList:
+            if val[0] == 'a':
+                modVal = val[1:]
+                try:
+                    float(modVal)
+                    valListA.append(int(modVal.rstrip()))
+                except ValueError:
+                    pass
+            elif val[0] == 'b':
+                modVal = val[1:]
+                try:
+                    float(modVal)
+                    valListB.append(int(modVal.rstrip()))
+                except ValueError:
+                    pass
+            else:
+                try:
+                    float(val)
+                    valListC.append(int(val.rstrip()))
+                except ValueError:
+                    pass
+    else:
+        valListsToSplit = testData()
+        valListA = valListsToSplit[0]
+        valListB = valListsToSplit[1]
+        valListC = valListsToSplit[2]
+        totalTime = 2.0
+        #totalTime = 5.0
 
     #Resize arrays to match A
     if len(valListA) <= len(valListB):
@@ -109,129 +207,19 @@ def runLoop(fileName):
             for i in range(diffC):
                 valListC.append(valListC[len(valListC)-1])
 
-    print ("Length of Val List A is " + str(len(valListA)))
-    #Open a text file that is writable
-    fileA = open("testfileA.txt","w")
-    for val in valListA:
-    	#If number is invalid, write a 0
-    	if not val:
-    		fileA.write('0 \n')
-    	#else write a string representation of the number to the file
-    	else:
-    		fileA.write(str(val))
-    		#\n means the end of the line. .txt files interpret this
-    		fileA.write('\n')
+    #Write values to files for easy analysis
+    writeToFile(valListA, valListB, valListC)
 
-    #Open a text file that is writable
-    fileB = open("testfileB.txt","w")
-    for val in valListB:
-    	#If number is invalid, write a 0
-    	if not val:
-    		fileB.write('0')
-    	#else write a string representation of the number to the file
-    	else:
-    		fileB.write(str(val))
-    		#\n means the end of the line. .txt files interpret this
-    		fileB.write('\n')
+    #Get peaks and troughs
+    maxAndMins = peaksTroughs(valListA, totalTime)
+    topPeakToTrough = maxAndMins[0]
+    bottomPeakToTrough = maxAndMins[1]
+    topTroughToPeak = maxAndMins[2]
+    bottomTroughToPeak = maxAndMins[3]
 
-    #Open a text file that is writable
-    fileC = open("testfileC.txt","w")
-    for val in valListC:
-    	#If number is invalid, write a 0
-    	if not val:
-    		fileC.write('0')
-    	#else write a string representation of the number to the file
-    	else:
-    		fileC.write(str(val))
-    		#\n means the end of the line. .txt files interpret this
-    		fileC.write('\n')
-
-
-    #Calculate the time difference between peak and trough in A
-    #First peak
-    countStartPtT = 0
-    for i in range(len(valListA) - 1):
-        if countStartPtT > 20:
-            firstIndexPtT = i - 20
-            firstValPtT = valListA[i-20]
-            break
-        else:
-            firstIndexPtT = None
-            firstValPtT = None
-        if (valListA[i+1] < valListA[i]):
-            countStartPtT = countStartPtT+1
-        else:
-            countStartPtT = 0
-
-    #First trough after peak
-    if firstIndexPtT != None:
-        for j in range(firstIndexPtT, len(valListA)-1):
-            if (valListA[j] < valListA[j+1]):
-                endIndexPtT = j
-                endValPtT = valListA[j]
-                break
-            else:
-                endIndexPtT = None
-                endValPtT = None
-    else:
-        endIndexPtT = None
-        endValPtT = None
-
-    #Calculate time difference between trough to peak
-    #countStartTtP = 0
-    if endIndexPtT != None:
-        for i in range(endIndexPtT, len(valListA) - 10):
-            if (valListA[i+10] - valListA[i] > 10):
-                firstIndexTtP = i;
-                firstValTtP = valListA[i]
-                break
-            else:
-                firstIndexTtP = None;
-                firstValTtP = None
-    else:
-        firstIndexTtP = None;
-        firstValTtP = None
-
-    flatArrayVals = []
-
-    if firstIndexTtP != None:
-        for j in range(firstIndexTtP, len(valListA) - 10):
-            if (valListA[j+10] - valListA[j] < 10):
-                startOfFlat = j
-                for k in range(20):
-                    flatArrayVals.append(valListA[j+k])
-                break
-
-        for i in range(10):
-            if (flatArrayVals[i+10] - flatArrayVals[i] < 3):
-                endIndexTtP = startOfFlat+i
-                endValTtP = valListA[endIndexTtP]
-            else:
-                endIndexTtP = None
-                endValTtP = None
-    else:
-        endIndexTtP = None
-        endValTtP = None
-
-    try:
-        firstIndexPtT = float(firstIndexPtT)*2/1000
-    except:
-        firstIndexPtT = None
-    try:
-        endIndexPtT = float(endIndexPtT)*2/1000
-    except:
-        endIndexPtT = None
-    try:
-        firstIndexTtP = float(firstIndexTtP)*2/1000
-    except:
-        firstIndexTtP = None
-    try:
-        endIndexTtP = float(endIndexTtP)*2/1000
-    except:
-        endIndexTtP = None
     #Increments to plot your points on are the total time divided by the amount of points
     #inc = totalTime/smallestLen
-    totalTime = 2.0
+    #totalTime = 2.0
     incA = totalTime/float(len(valListA))
     tA= np.arange(0.0, totalTime, incA)
 
@@ -243,33 +231,22 @@ def runLoop(fileName):
     valListCSave = np.array(valListC)
     timeSave = np.array(tA)
 
-    print len(valListASave)
-    print len(valListBSave)
-    print len(valListCSave)
-    print len(timeSave)
-
     dataSave = np.array([valListASave, valListBSave, valListCSave,timeSave])
     dataSave = dataSave.T
     #Open a text file that is writable
 
-    dataFilePath = "\dataSave.txt"
     fullPath = appDataPath + fileName
     #with open(dataFilePath, 'w+') as datafile_id:
     with open(fullPath, 'w+') as datafile_id:
-    #here you open the ascii file
-
         np.savetxt(datafile_id, dataSave, fmt=['%s','%s','%s','%f'])
-        #here the ascii file is written."""
 
-    #F = open(dataFilePath,'a')
     F = open(fullPath,'a')
     F.write("DETAILS")
-    #x = [1,2,3,4,5,6,7,8]
-    #y = [5,6,1,3,8,9,3,5]
-    values = [tA,valListA,valListB,valListC,firstIndexPtT,firstValPtT, endIndexPtT, endValPtT, firstIndexTtP, firstValTtP, endIndexTtP, endValTtP]
-    return values
-    #App_Window.refreshFigure(App_Window.refreshFigure(),tA,valListA,valListB,valListC,firstIndexPtT,firstValPtT, endIndexPtT, endValPtT, firstIndexTtP, firstValTtP, endIndexTtP, endValTtP)
 
+    print("LENGTH IS " + str(len(valListA)))
+
+    values = [tA,valListA,valListB,valListC,topPeakToTrough[0],topPeakToTrough[1], bottomPeakToTrough[0], bottomPeakToTrough[1], topTroughToPeak[0], topTroughToPeak[1], bottomTroughToPeak[0], bottomTroughToPeak[1]]
+    return values
 
 #Make object for application
 class App_Window(tk.Tk):
@@ -373,12 +350,12 @@ class App_Window(tk.Tk):
         self.TtPPeak.set_data([],[])
         self.TtPTrough.set_data([],[])
         ax = self.canvas.figure.axes[0]
-        ax.grid(False)
+        #ax.grid(False)
 
         self.canvas.draw()
 
 
-        self.refreshFigure(tA,valListA,valListB,valListC,firstIndexPtT,firstValPtT, endIndexPtT, endValPtT, firstIndexTtP, firstValTtP, endIndexTtP, endValTtP)
+        #self.refreshFigure(tA,valListA,valListB,valListC,firstIndexPtT,firstValPtT, endIndexPtT, endValPtT, firstIndexTtP, firstValTtP, endIndexTtP, endValTtP)
     	print("Finished")
 
     def refreshFigure(self,xA,yA,yB,yC,indexPtTPeak,valPtTPeak,indexPtTTrough,valPtTTrough,indexTtPPeak,valTtPPeak,indexTtPTrough,valTtPTrough):
@@ -423,7 +400,6 @@ class App_Window(tk.Tk):
         else:
             fileName = fileName + '.txt'
     	values = runLoop(fileName)
-        print values
         self.refreshFigure(values[0],values[1],values[2],values[3],values[4],values[5], values[6], values[7], values[8], values[9], values[10], values[11])
 
 
