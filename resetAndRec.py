@@ -30,18 +30,17 @@ class App_Window(tk.Tk):
         #These variables are set at the start to be used later on in the plotting. As long as they are 'in scope' and are set before you try to use them, it doesn't matter where you set them. Being in scope means being declared where you are using them. An example of being out of scope would be if you had a "main" function, and a separate "graph" function that is called inside main. If you declare a variable min_val inside the graph function, and try to use it in the main, it won't work because main can't see it.
         min_val = 0
         max_val = 1024
-        print("Test")
 
         #Prints a line to the terminal asking user to input the port number as 'COMx'. You can check the port number in device manager when the Arduino is plugged in
         #port = raw_input("Enter the port number (e.g. 'COM4'): \n")
-        port = 'com5'
+        port = 'com6'
 
         #Creates a variable called 'ser' that we will use to communicate with the serial port. Gives it the port number, the baud rate and timeout (not sure what timeout does but it fixed that 0000s problem)
-        #self.ser = serial.Serial(port, 230400, timeout=1)
+        self.ser = serial.Serial(port, 230400, timeout=1)
 
         #Some commented out stuff experimenting with weird data
         #ser = serial.Serial('COM4', 9600, timeout=1)
-        #self.ser.flush()
+        self.ser.flush()
 
         #Sleep tells the programme to wait for x seconds. Useful in serial comms when you want to be sure something has happened
         time.sleep(3)
@@ -101,8 +100,6 @@ class App_Window(tk.Tk):
 
         self.f = Figure(figsize=(6,4), dpi=100)
         a = self.f.add_subplot(111)
-        #b = f.add_subplot(312)
-        #c = f.add_subplot(313)
         x = []
         y = []
 
@@ -118,9 +115,6 @@ class App_Window(tk.Tk):
 
         self.canvas = FigureCanvasTkAgg(self.f, plotFrame)
         self.canvas.show()
-        #a.plot([1,2,3,4,5,6,7,8],[5,6,1,3,8,9,3,5])
-        #canvas = FigureCanvasTkAgg(f, plotFrame)
-        #canvas.show()
         self.canvas._tkcanvas.pack(side=tk.TOP, fill=tk.NONE, expand=False, anchor=W)
         self.update
         toolbar = NavigationToolbar2TkAgg(self.canvas, plotFrame).pack(side=tk.TOP)
@@ -137,9 +131,8 @@ class App_Window(tk.Tk):
 
     def clearGraph(self):
         print "reset"
-
+        self.valList = []
         self.line1.set_data([],[])
-        #self.dots.set_data([],[])
         self.line2.set_data([],[])
         self.line3.set_data([],[])
         self.PtTPeak.set_data([],[])
@@ -161,36 +154,109 @@ class App_Window(tk.Tk):
         else:
             fileName = fileName + '.txt'
 
-        #self.e2.get()
-        #print self.e3.get()
+        #TEMPORARY - Use to test data
         self.startTime = time.time()
-    	startCommand = 'START$'
-    	#sendStart = bytes(startCommand.encode('utf-8'))
+        startCommand = 'START$'
+        #sendStart = bytes(startCommand.encode('utf-8'))
         stopCommand = 'STOP$'
         #sendStop = bytes(stopCommand.encode('utf-8'))
-    	#self.ser.write(startCommand)
+        self.ser.write(startCommand)
+        print("START RECORDING")
+        for i in range(3000):
+            self.valList.append(self.ser.readline())
+        self.ser.write(stopCommand)
 
-        #TEMPORARY - Use to test data
-        fA = open('Test Results 2/testFileA.txt', 'r')
-        fLinesA = fA.read().split('\n')
+        endTime = time.time()
+        totalTime = endTime - self.startTime
+        #Split valList into 3 lists
         valListA = []
-        for aLine in fLinesA:
-            if aLine.strip():
-                valListA.append(int(aLine))
-
-        fB = open('Test Results 1/testFileB.txt', 'r')
-        fLinesB = fB.read().split('\n')
         valListB = []
-        for bLine in fLinesB:
-            if bLine.strip():
-                valListB.append(int(bLine))
-
-        fC = open('Test Results 1/testFileC.txt', 'r')
-        fLinesC = fC.read().split('\n')
         valListC = []
-        for cLine in fLinesC:
-            if cLine.strip():
-                valListC.append(int(cLine))
+
+        for val in self.valList:
+            #print(val)
+            if val[0] == 'a':
+                modVal = val[1:]
+                try:
+                    float(modVal)
+                    #countA += 1
+                    valListA.append(int(modVal.rstrip()))
+                except ValueError:
+                    pass
+                    #break
+            elif val[0] == 'b':
+                modVal = val[1:]
+                try:
+                    float(modVal)
+                    #countB += 1
+                    valListB.append(int(modVal.rstrip()))
+                except ValueError:
+                    pass
+            else:
+                try:
+                    float(val)
+                    #countC += 1
+                    valListC.append(int(val.rstrip()))
+                except ValueError:
+                    pass
+
+        #Resize arrays to match A
+        if len(valListA) <= len(valListB):
+            valListB = valListB[0:len(valListA)]
+            if len(valListA) <= len(valListC):
+                valListC = valListC[0:len(valListA)]
+            else:
+                diffC = len(valListA) - len(valListC)
+                for i in range(diffC):
+                    valListC.append(valListC[len(valListC)-1])
+        else:
+            diffB = len(valListA) - len(valListB)
+            for i in range(diffB):
+                valListB.append(valListB[len(valListB)-1])
+            if len(valListA) <= len(valListC):
+                valListC = valListC[0:len(valListA)]
+            else:
+                diffC = len(valListA) - len(valListC)
+                for i in range(diffC):
+                    valListC.append(valListC[len(valListC)-1])
+
+        print ("Length of Val List A is " + str(len(valListA)))
+        #Open a text file that is writable
+        fileA = open("testfileA.txt","w")
+        for val in valListA:
+        	#If number is invalid, write a 0
+        	if not val:
+        		fileA.write('0 \n')
+        	#else write a string representation of the number to the file
+        	else:
+        		fileA.write(str(val))
+        		#\n means the end of the line. .txt files interpret this
+        		fileA.write('\n')
+
+        #Open a text file that is writable
+        fileB = open("testfileB.txt","w")
+        for val in valListB:
+        	#If number is invalid, write a 0
+        	if not val:
+        		fileB.write('0')
+        	#else write a string representation of the number to the file
+        	else:
+        		fileB.write(str(val))
+        		#\n means the end of the line. .txt files interpret this
+        		fileB.write('\n')
+
+        #Open a text file that is writable
+        fileC = open("testfileC.txt","w")
+        for val in valListC:
+        	#If number is invalid, write a 0
+        	if not val:
+        		fileC.write('0')
+        	#else write a string representation of the number to the file
+        	else:
+        		fileC.write(str(val))
+        		#\n means the end of the line. .txt files interpret this
+        		fileC.write('\n')
+
 
         #Calculate the time difference between peak and trough in A
         #First peak
@@ -200,55 +266,98 @@ class App_Window(tk.Tk):
                 firstIndexPtT = i - 20
                 firstValPtT = valListA[i-20]
                 break
+            else:
+                firstIndexPtT = None
+                firstValPtT = None
             if (valListA[i+1] < valListA[i]):
                 countStartPtT = countStartPtT+1
             else:
                 countStartPtT = 0
 
         #First trough after peak
-        for j in range(firstIndexPtT, len(valListA)-1):
-            if (valListA[j] < valListA[j+1]):
-                endIndexPtT = j
-                endValPtT = valListA[j]
-                break
+        if firstIndexPtT != None:
+            for j in range(firstIndexPtT, len(valListA)-1):
+                if (valListA[j] < valListA[j+1]):
+                    endIndexPtT = j
+                    endValPtT = valListA[j]
+                    break
+                else:
+                    endIndexPtT = None
+                    endValPtT = None
+        else:
+            endIndexPtT = None
+            endValPtT = None
 
         #Calculate time difference between trough to peak
         #countStartTtP = 0
-        for i in range(endIndexPtT, len(valListA) - 10):
-            if (valListA[i+10] - valListA[i] > 10):
-                firstIndexTtP = i;
-                firstValTtP = valListA[i]
-                break
+        if endIndexPtT != None:
+            for i in range(endIndexPtT, len(valListA) - 10):
+                if (valListA[i+10] - valListA[i] > 10):
+                    firstIndexTtP = i;
+                    firstValTtP = valListA[i]
+                    break
+                else:
+                    firstIndexTtP = None;
+                    firstValTtP = None
+        else:
+            firstIndexTtP = None;
+            firstValTtP = None
 
         flatArrayVals = []
 
-        for j in range(firstIndexTtP, len(valListA) - 10):
-            if (valListA[j+10] - valListA[j] < 10):
-                startOfFlat = j
-                for k in range(20):
-                    flatArrayVals.append(valListA[j+k])
-                break
+        if firstIndexTtP != None:
+            for j in range(firstIndexTtP, len(valListA) - 10):
+                if (valListA[j+10] - valListA[j] < 10):
+                    startOfFlat = j
+                    for k in range(20):
+                        flatArrayVals.append(valListA[j+k])
+                    break
 
-        for i in range(10):
-            if (flatArrayVals[i+10] - flatArrayVals[i] < 3):
-                endIndexTtP = startOfFlat+i
-                endValTtP = valListA[endIndexTtP]
+            for i in range(10):
+                if (flatArrayVals[i+10] - flatArrayVals[i] < 3):
+                    endIndexTtP = startOfFlat+i
+                    endValTtP = valListA[endIndexTtP]
+                else:
+                    endIndexTtP = None
+                    endValTtP = None
+        else:
+            endIndexTtP = None
+            endValTtP = None
 
-        firstIndexPtT = float(firstIndexPtT)*2/1000
-        endIndexPtT = float(endIndexPtT)*2/1000
-        firstIndexTtP = float(firstIndexTtP)*2/1000
-        endIndexTtP = float(endIndexTtP)*2/1000
-
+        try:
+            firstIndexPtT = float(firstIndexPtT)*2/1000
+        except:
+            firstIndexPtT = None
+        try:
+            endIndexPtT = float(endIndexPtT)*2/1000
+        except:
+            endIndexPtT = None
+        try:
+            firstIndexTtP = float(firstIndexTtP)*2/1000
+        except:
+            firstIndexTtP = None
+        try:
+            endIndexTtP = float(endIndexTtP)*2/1000
+        except:
+            endIndexTtP = None
         #Increments to plot your points on are the total time divided by the amount of points
         #inc = totalTime/smallestLen
         totalTime = 2.0
         incA = totalTime/float(len(valListA))
         tA= np.arange(0.0, totalTime, incA)
 
+        if len(valListA) < len(tA):
+            tA = tA[0:len(valListA)]
+
         valListASave = np.array(valListA)
         valListBSave = np.array(valListB)
         valListCSave = np.array(valListC)
         timeSave = np.array(tA)
+
+        print len(valListASave)
+        print len(valListBSave)
+        print len(valListCSave)
+        print len(timeSave)
 
         dataSave = np.array([valListASave, valListBSave, valListCSave,timeSave])
         dataSave = dataSave.T
@@ -266,7 +375,6 @@ class App_Window(tk.Tk):
         #F = open(dataFilePath,'a')
         F = open(fullPath,'a')
         F.write("DETAILS")
-        indexTime = float(firstIndexPtT)*2/1000
         #x = [1,2,3,4,5,6,7,8]
         #y = [5,6,1,3,8,9,3,5]
         self.refreshFigure(tA,valListA,valListB,valListC,firstIndexPtT,firstValPtT, endIndexPtT, endValPtT, firstIndexTtP, firstValTtP, endIndexTtP, endValTtP)
@@ -284,10 +392,14 @@ class App_Window(tk.Tk):
         self.line1.set_data(xA,yA)
         self.line2.set_data(xA,yB)
         self.line3.set_data(xA,yC)
-        self.PtTPeak.set_data(indexPtTPeak,valPtTPeak)
-        self.PtTTrough.set_data(indexPtTTrough,valPtTTrough)
-        self.TtPPeak.set_data(indexTtPPeak,valTtPPeak)
-        self.TtPTrough.set_data(indexTtPTrough,valTtPTrough)
+        if (indexPtTPeak != None or valPtTPeak != None):
+            self.PtTPeak.set_data(indexPtTPeak,valPtTPeak)
+        if (indexPtTTrough != None or valPtTTrough != None):
+            self.PtTTrough.set_data(indexPtTTrough,valPtTTrough)
+        if (indexTtPPeak != None or valTtPPeak != None):
+            self.TtPPeak.set_data(indexTtPPeak,valTtPPeak)
+        if (indexTtPTrough != None or valTtPTrough != None):
+            self.TtPTrough.set_data(indexTtPTrough,valTtPTrough)
         ax = self.canvas.figure.axes[0]
 
         ax.yaxis.set_minor_locator(minorLocatory)
