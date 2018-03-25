@@ -381,7 +381,7 @@ class App_Window(tk.Tk):
         ax.yaxis.set_minor_locator(minorLocatory)
         ax.xaxis.set_minor_locator(minorLocator)
         # Set grid to use minor tick locations.
-        ax.grid(which = 'minor')
+        ax.grid(True, which = 'minor')
 
         ax.set_ylim(minY, maxY)
         ax.set_xlim(min(xA), max(xA))
