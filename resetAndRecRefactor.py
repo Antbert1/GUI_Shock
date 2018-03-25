@@ -25,13 +25,13 @@ testFlag = input("Test? 1 for yes, 0 for no. ")
 min_val = 0
 max_val = 1024
 
-#Prints a line to the terminal asking user to input the port number as 'COMx'. You can check the port number in device manager when the Arduino is plugged in
-#port = raw_input("Enter the port number (e.g. 'COM4'): \n")
+#Set the port number. Ultimately this will be a UI option
 port = 'com6'
 
 #This is an empty array of data that will be populated later with the values from the serial port
 valList = []
 
+#Write the data to text files
 def writeToFile(valListA, valListB, valListC):
     valFiles = ["testfileA.txt", "testfileB.txt", "testfileC.txt"]
     valLists = [valListA, valListB, valListC]
@@ -46,6 +46,7 @@ def writeToFile(valListA, valListB, valListC):
         		#\n means the end of the line. .txt files interpret this
         		valFile.write('\n')
 
+#Set up 3 data streams
 def testData():
     fA = open('Test Results 1/testFileA.txt', 'r')
     fLinesA = fA.read().split('\n')
@@ -70,6 +71,7 @@ def testData():
 
     return [valListA, valListB, valListC]
 
+#Convert sample number to time for max min points
 def numberTest(value, totalTime, sampleLength):
     #Check for test or not to use time values
     if testFlag == 0:
@@ -77,12 +79,12 @@ def numberTest(value, totalTime, sampleLength):
         sampleLength = 1000
 
     try:
-        newVal = float(value)*totalTime/1000
-        #newVal = float(value)*5/2334
+        newVal = float(value)*totalTime/sampleLength
     except:
         newVal = None
     return newVal
 
+#Calculate peaks and troughs of data A
 def peaksTroughs(valListA, totalTime):
     maxVal = max(valListA)
     maxVals = []
@@ -128,6 +130,7 @@ def peaksTroughs(valListA, totalTime):
 
     return [firstMax, nextMax, firstMin, nextMin]
 
+#Get data from serial port
 def runLoop(fileName):
     if testFlag == 1:
         ser = serial.Serial(port, 230400, timeout=1)
@@ -185,7 +188,6 @@ def runLoop(fileName):
         valListB = valListsToSplit[1]
         valListC = valListsToSplit[2]
         totalTime = 2.0
-        #totalTime = 5.0
 
     #Resize arrays to match A
     if len(valListA) <= len(valListB):
@@ -218,8 +220,6 @@ def runLoop(fileName):
     bottomTroughToPeak = maxAndMins[3]
 
     #Increments to plot your points on are the total time divided by the amount of points
-    #inc = totalTime/smallestLen
-    #totalTime = 2.0
     incA = totalTime/float(len(valListA))
     tA= np.arange(0.0, totalTime, incA)
 
@@ -341,7 +341,7 @@ class App_Window(tk.Tk):
 
     def clearGraph(self):
         print "reset"
-        valList = []
+        #valList = []
         self.line1.set_data([],[])
         self.line2.set_data([],[])
         self.line3.set_data([],[])
@@ -353,8 +353,6 @@ class App_Window(tk.Tk):
         #ax.grid(False)
 
         self.canvas.draw()
-
-
         #self.refreshFigure(tA,valListA,valListB,valListC,firstIndexPtT,firstValPtT, endIndexPtT, endValPtT, firstIndexTtP, firstValTtP, endIndexTtP, endValTtP)
     	print("Finished")
 
