@@ -1,4 +1,6 @@
-# import modules that I'm using
+# The code for changing pages was derived from: http://stackoverflow.com/questions/7546050/switch-between-two-frames-in-tkinter
+# License: http://creativecommons.org/licenses/by-sa/3.0/
+
 import matplotlib
 matplotlib.use('TKAgg')
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
@@ -20,8 +22,8 @@ if not os.path.exists(appDataPath):
     os.makedirs(appDataPath)
 
 #Give option for test data or real data
-testFlag = input("Test? 1 for yes, 0 for no. ")
-#These variables are set at the start to be used later on in the plotting. As long as they are 'in scope' and are set before you try to use them, it doesn't matter where you set them. Being in scope means being declared where you are using them. An example of being out of scope would be if you had a "main" function, and a separate "graph" function that is called inside main. If you declare a variable min_val inside the graph function, and try to use it in the main, it won't work because main can't see it.
+testFlag = raw_input("Test? 1 for yes, 0 for no. ")
+#testFlag = 0
 min_val = 0
 max_val = 1024
 
@@ -250,13 +252,50 @@ def runLoop(fileName):
     values = [tA,valListA,valListB,valListC,topPeakToTrough[0],topPeakToTrough[1], bottomPeakToTrough[0], bottomPeakToTrough[1], topTroughToPeak[0], topTroughToPeak[1], bottomTroughToPeak[0], bottomTroughToPeak[1]]
     return values
 
-#Make object for application
-class App_Window(tk.Tk):
 
-    def __init__(self,parent):
-        tk.Tk.__init__(self,parent)
+class  App_Window(tk.Tk):
+
+    def __init__(self, *args, **kwargs):
+
+        tk.Tk.__init__(self, *args, **kwargs)
+
+        #tk.Tk.iconbitmap(self, default="clienticon.ico")
+        #tk.Tk.wm_title(self, "Sea of BTC client")
+
+
+        container = tk.Frame(self)
+        container.pack(side="top", fill="both", expand = True)
+        container.grid_rowconfigure(0, weight=1)
+        container.grid_columnconfigure(0, weight=1)
+
+        self.frames = {}
+
+        for F in (StartPage, PageThree):
+
+            frame = F(container, self)
+
+            self.frames[F] = frame
+
+            frame.grid(row=0, column=0, sticky="nsew")
+
+        self.show_frame(StartPage)
+
+    def show_frame(self, cont):
+
+        frame = self.frames[cont]
+        frame.tkraise()
+
+
+class StartPage(tk.Frame):
+
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self,parent)
         self.parent = parent
         self.initialize()
+        button3 = tk.Button(self, text="Graph Page",
+                            command=lambda: controller.show_frame(PageThree))
+        button3.pack()
+
     def initialize(self):
         frame = Frame(self)
         frame.pack(side="left", fill="both", expand = True)
@@ -265,13 +304,13 @@ class App_Window(tk.Tk):
         plotFrame.pack(side="right", fill="both", expand = True)
 
         #Left-hand-side
-        self.l1 = Label(frame, text="Heading Text").grid(row=0,columnspan=2)
+        self.l1 = tk.Label(frame, text="Heading Text").grid(row=0,columnspan=2)
 
-        self.l2 = Label(frame, text="Name").grid(row=1, sticky=W)
-        self.l3 = Label(frame, text="Clicks (C)").grid(row=3, sticky=W)
-        self.l4 = Label(frame, text="Clicks (R)").grid(row=5, sticky=W)
-        self.l5 = Label(frame, text="Temp").grid(row=7, sticky=W)
-        self.l6 = Label(frame, text="Notes").grid(row=9, sticky=W)
+        self.l2 = tk.Label(frame, text="Name").grid(row=1, sticky=W)
+        self.l3 = tk.Label(frame, text="Clicks (C)").grid(row=3, sticky=W)
+        self.l4 = tk.Label(frame, text="Clicks (R)").grid(row=5, sticky=W)
+        self.l5 = tk.Label(frame, text="Temp").grid(row=7, sticky=W)
+        self.l6 = tk.Label(frame, text="Notes").grid(row=9, sticky=W)
 
         defaultName = tk.StringVar(frame, value='Timestamp')
 
@@ -425,7 +464,32 @@ class App_Window(tk.Tk):
         self.refreshFigure(values[0],values[1],values[2],values[3],values[4],values[5], values[6], values[7], values[8], values[9], values[10], values[11])
 
 
-if __name__ == "__main__":
-    MainWindow = App_Window(None)
-    MainWindow.minsize(width=800, height=600)
-    MainWindow.mainloop()
+class PageThree(tk.Frame):
+
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+        #label = tk.Label(self, text="Graph Page!", font=LARGE_FONT)
+        #label.pack(pady=10,padx=10)
+
+        button1 = tk.Button(self, text="Back to Home",
+                            command=lambda: controller.show_frame(StartPage))
+        button1.pack()
+
+        f = Figure(figsize=(5,5), dpi=100)
+        a = f.add_subplot(111)
+        a.plot([1,2,3,4,5,6,7,8],[5,6,1,3,8,9,3,5])
+
+
+
+        canvas = FigureCanvasTkAgg(f, self)
+        canvas.show()
+        canvas.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
+
+        toolbar = NavigationToolbar2TkAgg(canvas, self)
+        toolbar.update()
+        canvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+
+
+
+app =  App_Window()
+app.mainloop()
