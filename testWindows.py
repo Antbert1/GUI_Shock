@@ -270,7 +270,7 @@ class  App_Window(tk.Tk):
 
         self.frames = {}
 
-        for F in (StartPage, PageThree):
+        for F in (StartPage, ComparePage):
 
             frame = F(container, self)
 
@@ -293,7 +293,7 @@ class StartPage(tk.Frame):
         self.parent = parent
         self.initialize()
         button3 = tk.Button(self, text="Graph Page",
-                            command=lambda: controller.show_frame(PageThree))
+                            command=lambda: controller.show_frame(ComparePage))
         button3.pack()
 
     def initialize(self):
@@ -464,30 +464,116 @@ class StartPage(tk.Frame):
         self.refreshFigure(values[0],values[1],values[2],values[3],values[4],values[5], values[6], values[7], values[8], values[9], values[10], values[11])
 
 
-class PageThree(tk.Frame):
+class ComparePage(tk.Frame):
 
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         #label = tk.Label(self, text="Graph Page!", font=LARGE_FONT)
         #label.pack(pady=10,padx=10)
+        self.initialize()
 
+
+    def initialize(self):
         button1 = tk.Button(self, text="Back to Home",
                             command=lambda: controller.show_frame(StartPage))
         button1.pack()
 
-        f = Figure(figsize=(5,5), dpi=100)
-        a = f.add_subplot(111)
-        a.plot([1,2,3,4,5,6,7,8],[5,6,1,3,8,9,3,5])
+        listFrame = Frame(self)
+        listFrame.pack(side="left")
+
+        plotFrame = Frame(self)
+        plotFrame.pack(side="right", fill="both", expand = True)
+
+        self.f = Figure(figsize=(6,4), dpi=100)
+        a = self.f.add_subplot(111)
+        x = []
+        y = []
+
+        self.line1, = a.plot(x,y,'g')
+        self.line2, = a.plot(x,y,'r')
+        self.line3, = a.plot(x,y,'b')
+
+        self.canvas2 = FigureCanvasTkAgg(self.f, plotFrame)
+        self.canvas2.show()
+        self.canvas2._tkcanvas.pack(side=tk.TOP, fill=tk.NONE, expand=False, anchor=W)
+        self.update
+        toolbar = NavigationToolbar2TkAgg(self.canvas2, plotFrame).pack(side=tk.TOP)
+
+        self.savedValues = os.listdir(appDataPath)
+        for index, value in enumerate(self.savedValues):
+            value = value.split('.')[0]
+            self.savedValues[index] = IntVar()
+            #checkVar = IntVar()
+            self.savedValues[index].set(0)
+            self.valueCheck = Checkbutton(listFrame, text=value, variable=self.savedValues[index])
+            self.valueCheck.pack()
+
+        self.compareBtn_text = tk.StringVar()
+        compareBtn = tk.Button(listFrame,
+                           textvariable=self.compareBtn_text,
+                           command=self.compareGraphs)
+        compareBtn.pack()
+        self.compareBtn_text.set("Compare")
+
+    def compareGraphs(self):
+        graphNames = []
+        self.savedVals2 = os.listdir(appDataPath)
+        for index, value in enumerate(self.savedValues):
+            if value.get() == 1:
+                graphNames.append(self.savedVals2[index])
+
+        for index, graph in enumerate(graphNames):
+            fullName = appDataPath + str(graph)
+            f = open(fullName, 'r')
+            lines = f.readlines()
+            valListA = []
+            valListB = []
+            valListC = []
+
+            for i in range(len(lines)-1):
+                valListA.append(lines[i].split(' ')[0])
+                valListB.append(lines[i].split(' ')[1])
+                valListC.append(lines[i].split(' ')[2])
+
+        print len(valListA)
 
 
+        totalTime = 2
+        incA = totalTime/float(len(valListA))
+        tA= np.arange(0.0, totalTime, incA)
+        print(len(tA))
+        spacing = 0.1
+        spacingy = 80
+        minorLocator = MultipleLocator(spacing)
+        minorLocatory = MultipleLocator(spacingy)
 
-        canvas = FigureCanvasTkAgg(f, self)
-        canvas.show()
-        canvas.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
+        minY = 0
+        maxY = 1024
 
-        toolbar = NavigationToolbar2TkAgg(canvas, self)
-        toolbar.update()
-        canvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        self.line1.set_data(tA,valListA)
+        print tA
+        print valListA
+        #self.line2.set_data(tA,valListB)
+        #self.line3.set_data(tA,valListC)
+        """if (indexPtTPeak != None or valPtTPeak != None):
+            self.PtTPeak.set_data(indexPtTPeak,valPtTPeak)
+        if (indexPtTTrough != None or valPtTTrough != None):
+            self.PtTTrough.set_data(indexPtTTrough,valPtTTrough)
+        if (indexTtPPeak != None or valTtPPeak != None):
+            self.TtPPeak.set_data(indexTtPPeak,valTtPPeak)
+        if (indexTtPTrough != None or valTtPTrough != None):
+            self.TtPTrough.set_data(indexTtPTrough,valTtPTrough)"""
+        #ax = self.canvas2.figure.axes[0]
+
+        #ax.yaxis.set_minor_locator(minorLocatory)
+        #ax.xaxis.set_minor_locator(minorLocator)
+        # Set grid to use minor tick locations.
+        #ax.grid(True, which = 'minor')
+
+        #ax.set_ylim(minY, maxY)
+        #ax.set_xlim(min(tA), max(tA))
+        self.canvas2.draw()
+
 
 
 
