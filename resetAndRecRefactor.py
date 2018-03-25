@@ -130,6 +130,25 @@ def peaksTroughs(valListA, totalTime):
 
     return [firstMax, nextMax, firstMin, nextMin]
 
+#Save data to text file
+def saveDataAsTxt(fileName, valListA, valListB, valListC, tA):
+    valListASave = np.array(valListA)
+    valListBSave = np.array(valListB)
+    valListCSave = np.array(valListC)
+    timeSave = np.array(tA)
+
+    dataSave = np.array([valListASave, valListBSave, valListCSave,timeSave])
+    dataSave = dataSave.T
+    #Open a text file that is writable
+
+    fullPath = appDataPath + fileName
+    #with open(dataFilePath, 'w+') as datafile_id:
+    with open(fullPath, 'w+') as datafile_id:
+        np.savetxt(datafile_id, dataSave, fmt=['%s','%s','%s','%f'])
+
+    F = open(fullPath,'a')
+    F.write("DETAILS")
+
 #Get data from serial port
 def runLoop(fileName):
     if testFlag == 1:
@@ -226,23 +245,6 @@ def runLoop(fileName):
     if len(valListA) < len(tA):
         tA = tA[0:len(valListA)]
 
-    valListASave = np.array(valListA)
-    valListBSave = np.array(valListB)
-    valListCSave = np.array(valListC)
-    timeSave = np.array(tA)
-
-    dataSave = np.array([valListASave, valListBSave, valListCSave,timeSave])
-    dataSave = dataSave.T
-    #Open a text file that is writable
-
-    fullPath = appDataPath + fileName
-    #with open(dataFilePath, 'w+') as datafile_id:
-    with open(fullPath, 'w+') as datafile_id:
-        np.savetxt(datafile_id, dataSave, fmt=['%s','%s','%s','%f'])
-
-    F = open(fullPath,'a')
-    F.write("DETAILS")
-
     print("LENGTH IS " + str(len(valListA)))
 
     values = [tA,valListA,valListB,valListC,topPeakToTrough[0],topPeakToTrough[1], bottomPeakToTrough[0], bottomPeakToTrough[1], topTroughToPeak[0], topTroughToPeak[1], bottomTroughToPeak[0], bottomTroughToPeak[1]]
@@ -288,6 +290,8 @@ class App_Window(tk.Tk):
         self.e5.grid(row=10, column=0,sticky=W)
 
         self.btn_text = tk.StringVar()
+        self.saveTxt = tk.StringVar()
+        self.discardTxt = tk.StringVar()
 
         button = tk.Button(frame,
                            textvariable=self.btn_text,
@@ -302,6 +306,18 @@ class App_Window(tk.Tk):
                            command=self.resetGraph)
         self.btn_text2.set("Reset")
         button2.grid(row=12, column=0,stick=W)
+
+        saveBtn = tk.Button(frame,
+                           textvariable=self.saveTxt,
+                           command=self.saveBtn)
+        self.saveTxt.set("Save")
+        saveBtn.grid(row=13, column=0,stick=W)
+
+        discardBtn = tk.Button(frame,
+                           textvariable=self.discardTxt,
+                           command=self.resetGraph)
+        self.discardTxt.set("Discard")
+        discardBtn.grid(row=14, column=0,stick=W)
 
         #button = tk.Button(self,text="Start",command=self.OnButtonClick).pack(side=tk.LEFT,anchor=W)
         #button = tk.Button(plotFrame,text="Start",command=self.OnButtonClick).grid(row=11, column=0)
@@ -331,6 +347,9 @@ class App_Window(tk.Tk):
         Label(plotFrame, text="Data One").pack(anchor=W)
         Label(plotFrame, text="Data Two").pack(anchor=W)
         Label(plotFrame, text="Data Three").pack(anchor=W)
+
+    def saveBtn(self):
+        saveDataAsTxt(self.fileName, self.tA, self.valListA, self.valListB, self.valListC)
 
     def clearText(self, event):
         self.e1.delete(0, "end")
@@ -398,8 +417,28 @@ class App_Window(tk.Tk):
         else:
             fileName = fileName + '.txt'
     	values = runLoop(fileName)
+        self.fileName = fileName
+        self.tA = values[0]
+        self.valListA = values[1]
+        self.valListB = values[2]
+        self.valListC = values[3]
         self.refreshFigure(values[0],values[1],values[2],values[3],values[4],values[5], values[6], values[7], values[8], values[9], values[10], values[11])
 
+
+class PageOne(tk.Frame):
+
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+        label = tk.Label(self, text="Page One!!!", font=LARGE_FONT)
+        label.pack(pady=10,padx=10)
+
+        button1 = ttk.Button(self, text="Back to Home",
+                            command=lambda: controller.show_frame(StartPage))
+        button1.pack()
+
+        button2 = ttk.Button(self, text="Page Two",
+                            command=lambda: controller.show_frame(PageTwo))
+        button2.pack()
 
 if __name__ == "__main__":
     MainWindow = App_Window(None)
