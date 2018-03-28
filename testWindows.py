@@ -37,7 +37,6 @@ valList = []
 def writeToFile(valListA, valListB, valListC):
     valFiles = ["testfileA.txt", "testfileB.txt", "testfileC.txt"]
     valLists = [valListA, valListB, valListC]
-
     for index, file in enumerate(valFiles):
         valFile = open(file, "w")
         for val in valLists[index]:
@@ -470,14 +469,12 @@ class ComparePage(tk.Frame):
         tk.Frame.__init__(self, parent)
         #label = tk.Label(self, text="Graph Page!", font=LARGE_FONT)
         #label.pack(pady=10,padx=10)
-        self.initialize()
-
-
-    def initialize(self):
         button1 = tk.Button(self, text="Back to Home",
                             command=lambda: controller.show_frame(StartPage))
         button1.pack()
+        self.initialize()
 
+    def initialize(self):
         listFrame = Frame(self)
         listFrame.pack(side="left")
 
@@ -486,6 +483,7 @@ class ComparePage(tk.Frame):
 
         self.f = Figure(figsize=(6,4), dpi=100)
         a = self.f.add_subplot(111)
+
         x = []
         y = []
 
@@ -493,11 +491,12 @@ class ComparePage(tk.Frame):
         self.line2, = a.plot(x,y,'r')
         self.line3, = a.plot(x,y,'b')
 
-        self.canvas2 = FigureCanvasTkAgg(self.f, plotFrame)
-        self.canvas2.show()
-        self.canvas2._tkcanvas.pack(side=tk.TOP, fill=tk.NONE, expand=False, anchor=W)
+        self.canvas = FigureCanvasTkAgg(self.f, plotFrame)
+
+        self.canvas.show()
+        self.canvas._tkcanvas.pack(side=tk.TOP, fill=tk.NONE, expand=False, anchor=W)
         self.update
-        toolbar = NavigationToolbar2TkAgg(self.canvas2, plotFrame).pack(side=tk.TOP)
+        toolbar = NavigationToolbar2TkAgg(self.canvas, plotFrame).pack(side=tk.TOP)
 
         self.savedValues = os.listdir(appDataPath)
         for index, value in enumerate(self.savedValues):
@@ -516,6 +515,7 @@ class ComparePage(tk.Frame):
         self.compareBtn_text.set("Compare")
 
     def compareGraphs(self):
+
         graphNames = []
         self.savedVals2 = os.listdir(appDataPath)
         for index, value in enumerate(self.savedValues):
@@ -531,17 +531,14 @@ class ComparePage(tk.Frame):
             valListC = []
 
             for i in range(len(lines)-1):
-                valListA.append(lines[i].split(' ')[0])
-                valListB.append(lines[i].split(' ')[1])
-                valListC.append(lines[i].split(' ')[2])
-
-        print len(valListA)
-
+                valListA.append(float(lines[i].split(' ')[0]))
+                valListB.append(float(lines[i].split(' ')[1]))
+                valListC.append(float(lines[i].split(' ')[2]))
 
         totalTime = 2
         incA = totalTime/float(len(valListA))
         tA= np.arange(0.0, totalTime, incA)
-        print(len(tA))
+
         spacing = 0.1
         spacingy = 80
         minorLocator = MultipleLocator(spacing)
@@ -549,12 +546,6 @@ class ComparePage(tk.Frame):
 
         minY = 0
         maxY = 1024
-
-        self.line1.set_data(tA,valListA)
-        print tA
-        print valListA
-        #self.line2.set_data(tA,valListB)
-        #self.line3.set_data(tA,valListC)
         """if (indexPtTPeak != None or valPtTPeak != None):
             self.PtTPeak.set_data(indexPtTPeak,valPtTPeak)
         if (indexPtTTrough != None or valPtTTrough != None):
@@ -563,16 +554,21 @@ class ComparePage(tk.Frame):
             self.TtPPeak.set_data(indexTtPPeak,valTtPPeak)
         if (indexTtPTrough != None or valTtPTrough != None):
             self.TtPTrough.set_data(indexTtPTrough,valTtPTrough)"""
-        #ax = self.canvas2.figure.axes[0]
 
-        #ax.yaxis.set_minor_locator(minorLocatory)
-        #ax.xaxis.set_minor_locator(minorLocator)
+        #ax.clear()
+
+        self.line1.set_data(tA,valListA)
+        self.line2.set_data(tA,valListB)
+        self.line3.set_data(tA,valListC)
+        ax = self.canvas.figure.axes[0]
+        ax.yaxis.set_minor_locator(minorLocatory)
+        ax.xaxis.set_minor_locator(minorLocator)
         # Set grid to use minor tick locations.
-        #ax.grid(True, which = 'minor')
+        ax.grid(True, which = 'minor')
 
-        #ax.set_ylim(minY, maxY)
-        #ax.set_xlim(min(tA), max(tA))
-        self.canvas2.draw()
+        ax.set_ylim(minY, maxY)
+        ax.set_xlim(min(tA), max(tA))
+        self.canvas.draw()
 
 
 
