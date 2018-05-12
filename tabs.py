@@ -10,6 +10,7 @@ import matplotlib.ticker as plticker
 from matplotlib.ticker import MultipleLocator
 import Tkinter as tk
 from Tkinter import *
+import ttk
 import numpy as np
 import serial
 import os
@@ -258,10 +259,6 @@ class  App_Window(tk.Tk):
 
         tk.Tk.__init__(self, *args, **kwargs)
 
-        #tk.Tk.iconbitmap(self, default="clienticon.ico")
-        #tk.Tk.wm_title(self, "Sea of BTC client")
-
-
         container = tk.Frame(self)
         container.pack(side="top", fill="both", expand = True)
         container.grid_rowconfigure(0, weight=1)
@@ -291,9 +288,16 @@ class StartPage(tk.Frame):
         tk.Frame.__init__(self,parent)
         self.parent = parent
         self.initialize()
-        button3 = tk.Button(self, text="Graph Page",
+        # menuFrame = Frame(self)
+        # menuFrame.pack()
+        homeBtn = tk.Button(self, text="HOME",
+                            command=lambda: controller.show_frame(StartPage))
+        button3 = tk.Button(self, text="COMPARE",
                             command=lambda: controller.show_frame(ComparePage))
-        button3.pack()
+        dataBtn = tk.Button(self, text="DATA")
+        homeBtn.pack(menuFrame)
+        button3.pack(menuFrame)
+        dataBtn.pack()
 
     def initialize(self):
         frame = Frame(self)
@@ -303,7 +307,7 @@ class StartPage(tk.Frame):
         plotFrame.pack(side="right", fill="both", expand = True)
 
         #Left-hand-side
-        self.l1 = tk.Label(frame, text="Heading Text").grid(row=0,columnspan=2)
+        #self.l1 = tk.Label(frame, text="Heading Text").grid(row=0,columnspan=2)
 
         self.l2 = tk.Label(frame, text="Name").grid(row=1, sticky=W)
         self.l3 = tk.Label(frame, text="Clicks (C)").grid(row=3, sticky=W)
