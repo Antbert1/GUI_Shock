@@ -311,11 +311,8 @@ class StartPage(tk.Frame):
         frame = Frame(self)
         frame.pack(side="left", fill="both", padx=10, pady=10)
 
-        plotFrame = Frame(self)
-        plotFrame.pack(side="right", fill="both", expand = True)
-
         #Left-hand-side
-        self.l1 = tk.Label(frame, text="INPUT FIELDS").grid(row=0, sticky=W, columnspan=3)
+        self.l1 = Label(frame, text="INPUT FIELDS").grid(row=0, sticky=W, columnspan=3)
 
         self.l2 = Label(frame, text="Name").grid(row=1, sticky=W, columnspan=3)
         self.l3 = Label(frame, text="Clicks (C)").grid(row=3, sticky=W, columnspan=3)
@@ -342,35 +339,50 @@ class StartPage(tk.Frame):
         self.saveTxt = tk.StringVar()
         self.discardTxt = tk.StringVar()
 
-        startBtn = tk.Button(frame,
+        self.startBtn = tk.Button(frame,
                            textvariable=self.btn_text,command=self.OnButtonClick, padx=15, pady=8)
         self.btn_text.set("START")
-        startBtn.grid(row=11, column=0)
+        self.startBtn.grid(row=11, column=0)
 
         self.btn_text2 = tk.StringVar()
-        resetBtn = tk.Button(frame,
+        self.resetBtn = tk.Button(frame,
                            textvariable=self.btn_text2,
-                           command=self.resetGraph, padx=15, pady=8)
+                           command=self.resetGraph, state=DISABLED, padx=15, pady=8)
         self.btn_text2.set("RESET")
-        resetBtn.grid(row=11, column=1)
+        self.resetBtn.grid(row=11, column=1)
         frame.grid_rowconfigure(11, minsize=50)
 
-        saveBtn = tk.Button(frame,
-                           textvariable=self.saveTxt,
-                           command=self.saveBtn)
-        self.saveTxt.set("Save")
-        saveBtn.grid(row=13, column=0,stick=W)
-
-        discardBtn = tk.Button(frame,
-                           textvariable=self.discardTxt,
-                           command=self.resetGraph)
-        self.discardTxt.set("Discard")
-        discardBtn.grid(row=14, column=0,stick=W)
+        # saveBtn = tk.Button(frame,
+        #                    textvariable=self.saveTxt,
+        #                    command=self.saveBtn)
+        # self.saveTxt.set("Save")
+        # saveBtn.grid(row=13, column=0,stick=W)
+        #
+        # discardBtn = tk.Button(frame,
+        #                    textvariable=self.discardTxt,
+        #                    command=self.resetGraph)
+        # self.discardTxt.set("Discard")
+        # discardBtn.grid(row=14, column=0,stick=W)
 
         #button = tk.Button(self,text="Start",command=self.OnButtonClick).pack(side=tk.LEFT,anchor=W)
         #button = tk.Button(plotFrame,text="Start",command=self.OnButtonClick).grid(row=11, column=0)
         #Right hand side with Graph
-        Label(plotFrame, text="Graph Stuff heading").pack()
+
+        plotFrame = Frame(self)
+        plotFrame.pack(side="right", fill="both", expand = True, padx=40, pady=10)
+        saveBtn = tk.Button(plotFrame,
+                           textvariable=self.saveTxt,
+                           command=self.saveBtn, padx=20, pady=8)
+        self.saveTxt.set("SAVE")
+        saveBtn.grid(row=2, column=4, sticky=E)
+
+        discardBtn = tk.Button(plotFrame,
+                           textvariable=self.discardTxt,
+                           command=self.resetGraph, padx=15, pady=8)
+        self.discardTxt.set("DISCARD")
+        discardBtn.grid(row=2, column=5)
+
+        Label(plotFrame, text="GRAPH STUFF HEADING").grid(row=0, column=0, sticky=W)
 
         self.f = Figure(figsize=(6,4), dpi=100)
         a = self.f.add_subplot(111)
@@ -389,12 +401,18 @@ class StartPage(tk.Frame):
 
         self.canvas = FigureCanvasTkAgg(self.f, plotFrame)
         self.canvas.show()
-        self.canvas._tkcanvas.pack(side=tk.TOP, fill=tk.NONE, expand=False, anchor=W)
+        # self.canvas._tkcanvas.pack(side=tk.TOP, fill=tk.NONE, expand=False, anchor=W)
+        # self.update
+        # toolbar = NavigationToolbar2TkAgg(self.canvas, plotFrame).pack(side=tk.TOP)
+        # Label(plotFrame, text="Data One").pack(anchor=W)
+        # Label(plotFrame, text="Data Two").pack(anchor=W)
+        # Label(plotFrame, text="Data Three").pack(anchor=W)
+        self.canvas._tkcanvas.grid(row=1, column=0, columnspan=6, pady=8)
         self.update
-        toolbar = NavigationToolbar2TkAgg(self.canvas, plotFrame).pack(side=tk.TOP)
-        Label(plotFrame, text="Data One").pack(anchor=W)
-        Label(plotFrame, text="Data Two").pack(anchor=W)
-        Label(plotFrame, text="Data Three").pack(anchor=W)
+        toolbar = NavigationToolbar2TkAgg(self.canvas, plotFrame).grid(row=2, column=0, columnspan=6, sticky=W)
+        Label(plotFrame, text="Data One").grid(row=4, column=0, sticky=W)
+        Label(plotFrame, text="Data Two").grid(row=5, column=0, sticky=W)
+        Label(plotFrame, text="Data Three").grid(row=6, column=0, sticky=W)
 
     def saveBtn(self):
         saveDataAsTxt(self.fileName, self.tA, self.valListA, self.valListB, self.valListC)
@@ -407,6 +425,8 @@ class StartPage(tk.Frame):
         self.clearGraph()
 
     def clearGraph(self):
+        self.startBtn.config(state='normal')
+        self.resetBtn.config(state='disabled')
         print "reset"
         #valList = []
         self.line1.set_data([],[])
@@ -455,6 +475,8 @@ class StartPage(tk.Frame):
         self.canvas.draw()
 
     def OnButtonClick(self):
+        self.startBtn.config(state='disabled')
+        self.resetBtn.config(state='normal')
         fileName = self.e1.get()
 
         timeStampUnsplit = str(datetime.now())[0:19].split(' ')
