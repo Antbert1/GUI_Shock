@@ -287,34 +287,41 @@ class StartPage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self,parent)
         self.parent = parent
-        self.initialize()
-        # menuFrame = Frame(self)
-        # menuFrame.pack()
-        homeBtn = tk.Button(self, text="HOME",
-                            command=lambda: controller.show_frame(StartPage))
-        button3 = tk.Button(self, text="COMPARE",
+        topFrame = Frame(self)
+        topFrame.pack(side="top", fill="both")
+        # homeBtn = tk.Button(topFrame, text="HOME", padx=20, pady=10,
+        #                      command=lambda: self.show_frame(StartPage))
+        homeBtn = tk.Button(topFrame, text="HOME", padx=20, pady=10,
+                             command=lambda: controller.show_frame(StartPage))
+                             # frame.tkraise()
+        compareBtn = tk.Button(topFrame, text="COMPARE", padx=20, pady=10,
                             command=lambda: controller.show_frame(ComparePage))
-        dataBtn = tk.Button(self, text="DATA")
-        homeBtn.pack(menuFrame)
-        button3.pack(menuFrame)
-        dataBtn.pack()
+        dataBtn = tk.Button(topFrame, text="DATA", padx=20, pady=10)
+        homeBtn.grid(row=0, column=1)
+        compareBtn.grid(row=0, column=2)
+        dataBtn.grid(row=0, column=3)
+
+        self.initialize()
+
 
     def initialize(self):
+        #Line to cut off menu
+        menuSeparator = Frame(self, height=1, bg="grey").pack(side="top", fill="both")
+
         frame = Frame(self)
-        frame.pack(side="left", fill="both", expand = True)
+        frame.pack(side="left", fill="both", padx=10, pady=10)
 
         plotFrame = Frame(self)
         plotFrame.pack(side="right", fill="both", expand = True)
 
         #Left-hand-side
-        #self.l1 = tk.Label(frame, text="Heading Text").grid(row=0,columnspan=2)
+        self.l1 = tk.Label(frame, text="INPUT FIELDS").grid(row=0, sticky=W, columnspan=3)
 
-        self.l2 = tk.Label(frame, text="Name").grid(row=1, sticky=W)
-        self.l3 = tk.Label(frame, text="Clicks (C)").grid(row=3, sticky=W)
-        self.l4 = tk.Label(frame, text="Clicks (R)").grid(row=5, sticky=W)
-        self.l5 = tk.Label(frame, text="Temp").grid(row=7, sticky=W)
-        self.l6 = tk.Label(frame, text="Notes").grid(row=9, sticky=W)
-
+        self.l2 = Label(frame, text="Name").grid(row=1, sticky=W, columnspan=3)
+        self.l3 = Label(frame, text="Clicks (C)").grid(row=3, sticky=W, columnspan=3)
+        self.l4 = Label(frame, text="Clicks (R)").grid(row=5, sticky=W, columnspan=3)
+        self.l5 = Label(frame, text="Temp").grid(row=7, sticky=W, columnspan=3)
+        self.l6 = Label(frame, text="Notes").grid(row=9, sticky=W, columnspan=3)
         defaultName = tk.StringVar(frame, value='Timestamp')
 
         #Put timestamp as default value and clear it when clicked
@@ -325,29 +332,28 @@ class StartPage(tk.Frame):
         self.e4 = Entry(frame, width=30)
         self.e5 = Text(frame,width=23, height=5)
 
-        self.e1.grid(row=2, column=0,sticky=W)
-        self.e2.grid(row=4, column=0,sticky=W)
-        self.e3.grid(row=6, column=0,sticky=W)
-        self.e4.grid(row=8, column=0,sticky=W)
-        self.e5.grid(row=10, column=0,sticky=W)
+        self.e1.grid(row=2, column=0,sticky=W, columnspan=3)
+        self.e2.grid(row=4, column=0,sticky=W, columnspan=3)
+        self.e3.grid(row=6, column=0,sticky=W, columnspan=3)
+        self.e4.grid(row=8, column=0,sticky=W, columnspan=3)
+        self.e5.grid(row=10, column=0,sticky=W, columnspan=3)
 
         self.btn_text = tk.StringVar()
         self.saveTxt = tk.StringVar()
         self.discardTxt = tk.StringVar()
 
-        button = tk.Button(frame,
-                           textvariable=self.btn_text,
-                           fg="green",
-                           command=self.OnButtonClick)
-        self.btn_text.set("Start")
-        button.grid(row=11, column=0,stick=W)
+        startBtn = tk.Button(frame,
+                           textvariable=self.btn_text,command=self.OnButtonClick, padx=15, pady=8)
+        self.btn_text.set("START")
+        startBtn.grid(row=11, column=0)
 
         self.btn_text2 = tk.StringVar()
-        button2 = tk.Button(frame,
+        resetBtn = tk.Button(frame,
                            textvariable=self.btn_text2,
-                           command=self.resetGraph)
-        self.btn_text2.set("Reset")
-        button2.grid(row=12, column=0,stick=W)
+                           command=self.resetGraph, padx=15, pady=8)
+        self.btn_text2.set("RESET")
+        resetBtn.grid(row=11, column=1)
+        frame.grid_rowconfigure(11, minsize=50)
 
         saveBtn = tk.Button(frame,
                            textvariable=self.saveTxt,
@@ -473,9 +479,22 @@ class ComparePage(tk.Frame):
         tk.Frame.__init__(self, parent)
         #label = tk.Label(self, text="Graph Page!", font=LARGE_FONT)
         #label.pack(pady=10,padx=10)
-        button1 = tk.Button(self, text="Back to Home",
-                            command=lambda: controller.show_frame(StartPage))
-        button1.pack()
+        # button1 = tk.Button(self, text="Back to Home",
+        #                     command=lambda: controller.show_frame(StartPage))
+        # button1.pack()
+        topFrame = Frame(self)
+        topFrame.pack(side="top", fill="both")
+        # homeBtn = tk.Button(topFrame, text="HOME", padx=20, pady=10,
+        #                      command=lambda: self.show_frame(StartPage))
+        homeBtn = tk.Button(topFrame, text="HOME", padx=20, pady=10,
+                             command=lambda: controller.show_frame(StartPage))
+                             # frame.tkraise()
+        compareBtn = tk.Button(topFrame, text="COMPARE", padx=20, pady=10,
+                            command=lambda: controller.show_frame(ComparePage))
+        dataBtn = tk.Button(topFrame, text="DATA", padx=20, pady=10)
+        homeBtn.grid(row=0, column=1)
+        compareBtn.grid(row=0, column=2)
+        dataBtn.grid(row=0, column=3)
         self.initialize()
 
     def initialize(self):
@@ -606,4 +625,5 @@ class ComparePage(tk.Frame):
 
 
 app =  App_Window()
+app.minsize(width=1024, height=650)
 app.mainloop()

@@ -20,12 +20,12 @@ class App_Window(tk.Tk):
         compareBtn.grid(row=0, column=2)
         dataBtn.grid(row=0, column=3)
 
-        menuSeparator = Frame(self, height=1, bg="grey").pack(side="top", fill="both")
+        menuSeparator = Frame(self, height=1, bg="grey", pady=20).pack(side="top", fill="both")
 
         leftFrame = Frame(self, bg="red")
         leftFrame.pack(side="left", fill="both", padx=10, pady=10)
 
-        self.l1 = Label(leftFrame, text="INPUT FIELDS").grid(row=0,columnspan=2)
+        self.l1 = Label(leftFrame, text="INPUT FIELDS").grid(row=0, sticky=W, columnspan=3)
 
         self.l2 = Label(leftFrame, text="Name").grid(row=1, sticky=W, columnspan=3)
         self.l3 = Label(leftFrame, text="Clicks (C)").grid(row=3, sticky=W, columnspan=3)
@@ -45,11 +45,11 @@ class App_Window(tk.Tk):
         self.e4.grid(row=8, column=0,sticky=W, columnspan=3)
         self.e5.grid(row=10, column=0,sticky=W, columnspan=3)
 
-        startBtn = tk.Button(leftFrame, text="START", padx=20, pady=10)
-        resetBtn = tk.Button(leftFrame, text="RESET", padx=20, pady=10)
+        startBtn = tk.Button(leftFrame, text="START", padx=15, pady=8)
+        resetBtn = tk.Button(leftFrame, text="RESET", padx=15, pady=8)
         startBtn.grid(row=11,column=0)
         resetBtn.grid(row=11,column=1)
-        leftFrame.grid_rowconfigure(11, minsize=60)
+        leftFrame.grid_rowconfigure(11, minsize=50)
 
 
         rightFrame = Frame(self, bg="blue")
@@ -59,5 +59,5 @@ class App_Window(tk.Tk):
 
 
 MainWindow = App_Window(None)
-MainWindow.minsize(width=800, height=600)
+MainWindow.minsize(width=1024, height=650)
 MainWindow.mainloop()
