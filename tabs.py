@@ -314,19 +314,23 @@ class StartPage(tk.Frame):
         #Left-hand-side
         self.l1 = Label(frame, text="INPUT FIELDS").grid(row=0, sticky=W, columnspan=3)
 
-        self.l2 = Label(frame, text="Name").grid(row=1, sticky=W, columnspan=3)
+        self.l2 = Label(frame, text="Name *").grid(row=1, sticky=W, columnspan=3)
         self.l3 = Label(frame, text="Clicks (C)").grid(row=3, sticky=W, columnspan=3)
         self.l4 = Label(frame, text="Clicks (R)").grid(row=5, sticky=W, columnspan=3)
         self.l5 = Label(frame, text="Temp").grid(row=7, sticky=W, columnspan=3)
         self.l6 = Label(frame, text="Notes").grid(row=9, sticky=W, columnspan=3)
-        defaultName = tk.StringVar(frame, value='Timestamp')
+        self.defaultName = tk.StringVar(frame, value='Timestamp')
+        self.e2txt = tk.StringVar()
+        self.e3txt = tk.StringVar()
+        self.e4txt = tk.StringVar()
+        self.e5txt = tk.StringVar()
 
         #Put timestamp as default value and clear it when clicked
-        self.e1 = Entry(frame, width=30, textvariable=defaultName)
+        self.e1 = Entry(frame, width=30, textvariable=self.defaultName)
         self.e1.bind("<Button-1>", self.clearText)
-        self.e2 = Entry(frame, width=30)
-        self.e3 = Entry(frame, width=30)
-        self.e4 = Entry(frame, width=30)
+        self.e2 = Entry(frame, width=30, textvariable=self.e2txt)
+        self.e3 = Entry(frame, width=30, textvariable=self.e3txt)
+        self.e4 = Entry(frame, width=30, textvariable=self.e4txt)
         self.e5 = Text(frame,width=23, height=5)
 
         self.e1.grid(row=2, column=0,sticky=W, columnspan=3)
@@ -370,19 +374,19 @@ class StartPage(tk.Frame):
 
         plotFrame = Frame(self)
         plotFrame.pack(side="right", fill="both", expand = True, padx=40, pady=10)
-        saveBtn = tk.Button(plotFrame,
+        self.saveBtn = tk.Button(plotFrame,
                            textvariable=self.saveTxt,
-                           command=self.saveBtn, padx=20, pady=8)
+                           command=self.saveBtn, state=DISABLED, padx=20, pady=8)
         self.saveTxt.set("SAVE")
-        saveBtn.grid(row=2, column=4, sticky=E)
+        self.saveBtn.grid(row=2, column=4, sticky=E)
 
-        discardBtn = tk.Button(plotFrame,
+        self.discardBtn = tk.Button(plotFrame,
                            textvariable=self.discardTxt,
-                           command=self.resetGraph, padx=15, pady=8)
+                           command=self.resetGraph, state=DISABLED, padx=15, pady=8)
         self.discardTxt.set("DISCARD")
-        discardBtn.grid(row=2, column=5)
+        self.discardBtn.grid(row=2, column=5)
 
-        Label(plotFrame, text="GRAPH STUFF HEADING").grid(row=0, column=0, sticky=W)
+        Label(plotFrame, text="GRAPH").grid(row=0, column=0, sticky=W)
 
         self.f = Figure(figsize=(6,4), dpi=100)
         a = self.f.add_subplot(111)
@@ -409,10 +413,13 @@ class StartPage(tk.Frame):
         # Label(plotFrame, text="Data Three").pack(anchor=W)
         self.canvas._tkcanvas.grid(row=1, column=0, columnspan=6, pady=8)
         self.update
-        toolbar = NavigationToolbar2TkAgg(self.canvas, plotFrame).grid(row=2, column=0, columnspan=6, sticky=W)
-        Label(plotFrame, text="Data One").grid(row=4, column=0, sticky=W)
-        Label(plotFrame, text="Data Two").grid(row=5, column=0, sticky=W)
-        Label(plotFrame, text="Data Three").grid(row=6, column=0, sticky=W)
+        self.data1Txt = tk.StringVar()
+        self.data2Txt = tk.StringVar()
+        self.data3Txt = tk.StringVar()
+        # toolbar = NavigationToolbar2TkAgg(self.canvas, plotFrame).grid(row=2, column=0, columnspan=6, sticky=W)
+        self.data1 = Label(plotFrame, textvariable=self.data1Txt).grid(row=3, column=0, sticky=W)
+        self.data2 = Label(plotFrame, textvariable=self.data2Txt).grid(row=4, column=0, sticky=W)
+        self.data3 = Label(plotFrame, textvariable=self.data3Txt).grid(row=5, column=0, sticky=W)
 
     def saveBtn(self):
         saveDataAsTxt(self.fileName, self.tA, self.valListA, self.valListB, self.valListC)
@@ -427,6 +434,15 @@ class StartPage(tk.Frame):
     def clearGraph(self):
         self.startBtn.config(state='normal')
         self.resetBtn.config(state='disabled')
+        self.saveBtn.config(state='disabled')
+        self.discardBtn.config(state='disabled')
+        self.data1Txt.set("")
+        self.data2Txt.set("")
+        self.data3Txt.set("")
+        self.e2txt.set("")
+        self.e3txt.set("")
+        self.e4txt.set("")
+        self.e5txt.set("")
         print "reset"
         #valList = []
         self.line1.set_data([],[])
@@ -477,7 +493,24 @@ class StartPage(tk.Frame):
     def OnButtonClick(self):
         self.startBtn.config(state='disabled')
         self.resetBtn.config(state='normal')
+        self.saveBtn.config(state='normal')
+        self.discardBtn.config(state='normal')
         fileName = self.e1.get()
+        clicks = self.e2.get()
+        clicks2 = self.e3.get()
+        temp = self.e4.get()
+        if (len(clicks) > 0):
+            self.data1Txt.set("Clicks(C): " + clicks)
+        else:
+            self.data1Txt.set("Clicks(C) not set")
+        if (len(clicks2) > 0):
+            self.data2Txt.set("Clicks(R): " + clicks2)
+        else:
+            self.data2Txt.set("Clicks(R) not set")
+        if (len(temp) > 0):
+            self.data3Txt.set("Temperature: " + temp)
+        else:
+            self.data3Txt.set("Temperature not set")
 
         timeStampUnsplit = str(datetime.now())[0:19].split(' ')
         timeStamp = (timeStampUnsplit[0] + 'T' + timeStampUnsplit[1] + '.txt').replace(':', '-')
@@ -647,5 +680,5 @@ class ComparePage(tk.Frame):
 
 
 app =  App_Window()
-app.minsize(width=1024, height=650)
+app.minsize(width=800, height=600)
 app.mainloop()
