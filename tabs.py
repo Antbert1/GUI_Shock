@@ -443,6 +443,7 @@ class StartPage(tk.Frame):
         self.e3txt.set("")
         self.e4txt.set("")
         self.e5txt.set("")
+        self.e5.delete(1.0, END)
         print "reset"
         #valList = []
         self.line1.set_data([],[])
