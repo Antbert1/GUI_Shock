@@ -133,7 +133,7 @@ def peaksTroughs(valListA, totalTime):
     return [firstMax, nextMax, firstMin, nextMin]
 
 #Save data to text file
-def saveDataAsTxt(fileName, valListA, valListB, valListC, tA):
+def saveDataAsTxt(fileName, valListA, valListB, valListC, tA, extraVals):
     valListASave = np.array(valListA)
     valListBSave = np.array(valListB)
     valListCSave = np.array(valListC)
@@ -149,7 +149,30 @@ def saveDataAsTxt(fileName, valListA, valListB, valListC, tA):
         np.savetxt(datafile_id, dataSave, fmt=['%s','%s','%s','%f'])
 
     F = open(fullPath,'a')
-    F.write("DETAILS")
+    F.write("DETAILS \n")
+    F.write("CLICKSC \n")
+    if (len(extraVals[0]) > 0):
+        F.write(extraVals[0])
+    else:
+        F.write('NA')
+    F.write('\n')
+    F.write("CLICKSR \n")
+    if (len(extraVals[1]) > 0):
+        F.write(extraVals[1])
+    else:
+        F.write('NA')
+    F.write('\n')
+    F.write("TEMP \n")
+    if (len(extraVals[2]) > 0):
+        F.write(extraVals[2])
+    else:
+        F.write('NA')
+    F.write('\n')
+    F.write("NOTES \n")
+    if (len(extraVals[3]) > 0):
+        F.write(extraVals[3])
+    else:
+        F.write('NA')
 
 #Get data from serial port
 def runLoop(fileName):
@@ -413,7 +436,12 @@ class StartPage(tk.Frame):
         self.saved.set("Saved")
         self.saveBtn.config(state='disabled')
         self.discardBtn.config(state='disabled')
-        saveDataAsTxt(self.fileName, self.tA, self.valListA, self.valListB, self.valListC)
+        gete2 = self.e2txt.get()
+        gete3 = self.e3txt.get()
+        gete4 = self.e4txt.get()
+        gete5 = self.e5.get("1.0",END)
+        extraVals = [gete2, gete3, gete4, gete5]
+        saveDataAsTxt(self.fileName, self.tA, self.valListA, self.valListB, self.valListC, extraVals)
 
     def clearText(self, event):
         self.e1.delete(0, "end")
