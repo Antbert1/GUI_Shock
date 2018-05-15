@@ -76,7 +76,7 @@ def testData():
 #Convert sample number to time for max min points
 def numberTest(value, totalTime, sampleLength):
     #Check for test or not to use time values
-    if testFlag == 0:
+    if testFlag == '0':
         totalTime = 2
         sampleLength = 1000
 
@@ -153,15 +153,19 @@ def saveDataAsTxt(fileName, valListA, valListB, valListC, tA):
 
 #Get data from serial port
 def runLoop(fileName):
-    if testFlag == 1:
+    print "TEST FLAG IS " + testFlag
+    if testFlag == '1':
+        print "REAL TEST"
         ser = serial.Serial(port, 230400, timeout=1)
         #Need to give 3 seconds to activate
         time.sleep(3)
+    else:
+        print "NOT REAL"
 
     valList = []
     startTime = time.time()
 
-    if testFlag == 1:
+    if testFlag == '1':
         startCommand = 'START$'
         #sendStart = bytes(startCommand.encode('utf-8'))
         stopCommand = 'STOP$'
@@ -535,6 +539,7 @@ class ComparePage(tk.Frame):
                              # frame.tkraise()
         compareBtn = tk.Button(topFrame, text="COMPARE", padx=20, pady=10,
                             command=lambda: controller.show_frame(ComparePage))
+        compareBtn.config(relief=SUNKEN)
         dataBtn = tk.Button(topFrame, text="DATA", padx=20, pady=10)
         homeBtn.grid(row=0, column=1)
         compareBtn.grid(row=0, column=2)
@@ -640,16 +645,6 @@ class ComparePage(tk.Frame):
 
         minY = 0
         maxY = 1024
-        """if (indexPtTPeak != None or valPtTPeak != None):
-            self.PtTPeak.set_data(indexPtTPeak,valPtTPeak)
-        if (indexPtTTrough != None or valPtTTrough != None):
-            self.PtTTrough.set_data(indexPtTTrough,valPtTTrough)
-        if (indexTtPPeak != None or valTtPPeak != None):
-            self.TtPPeak.set_data(indexTtPPeak,valTtPPeak)
-        if (indexTtPTrough != None or valTtPTrough != None):
-            self.TtPTrough.set_data(indexTtPTrough,valTtPTrough)"""
-
-        #ax.clear()
 
         self.line1.set_data(tA,valListA1)
         self.line2.set_data(tA,valListC1)
@@ -670,4 +665,5 @@ class ComparePage(tk.Frame):
 
 app =  App_Window()
 app.minsize(width=800, height=600)
+app.resizable(width=False, height=False)
 app.mainloop()
