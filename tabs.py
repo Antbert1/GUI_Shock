@@ -575,81 +575,135 @@ class ComparePage(tk.Frame):
         self.initialize()
 
     def initialize(self):
+        #Grey line that separates menu
+        menuSeparator = Frame(self, height=1, bg="grey", pady=20).pack(side="top", fill="both")
+
+        #Left frame that holds comparison list
         listFrame = Frame(self)
-        listFrame.pack(side="left")
+        listFrame.pack(side="left", fill="both", padx=10, pady=10)
 
+        #Right frame that holds plot
         plotFrame = Frame(self)
-        plotFrame.pack(side="right", fill="both", expand = True)
-
+        plotFrame.pack(side="right", fill="both", expand = True, padx=40, pady=10)
+        Label(plotFrame, text="COMPARE RESULTS").grid(row=0, column=0, sticky=W)
         self.f = Figure(figsize=(6,4), dpi=100)
         a = self.f.add_subplot(111)
 
+        #Initialise x and y axes to 0
         x = []
         y = []
 
+        #Draw null lines that can be changed later. Colours must be set here.
         self.line1, = a.plot(x,y,'r')
         self.line2, = a.plot(x,y,'g')
         self.line3, = a.plot(x,y,'b')
         self.line4, = a.plot(x,y,'y')
-
         self.canvas = FigureCanvasTkAgg(self.f, plotFrame)
-
         self.canvas.show()
-        self.canvas._tkcanvas.pack(side=tk.TOP, fill=tk.NONE, expand=False, anchor=W)
+        self.canvas._tkcanvas.grid(row=1, column=0, columnspan=6, pady=8)
         self.update
-        toolbar = NavigationToolbar2TkAgg(self.canvas, plotFrame).pack(side=tk.TOP)
 
+        #Get list of filenames from appdata folder
         self.savedValues = os.listdir(appDataPath)
+
+        #New array to hold easier to read list (cut off extension)
+        self.newVals = []
         for index, value in enumerate(self.savedValues):
             value = value.split('.')[0]
-            self.savedValues[index] = IntVar()
+            self.newVals.append(value)
+            # self.savedValues[index] = IntVar()
             #checkVar = IntVar()
-            self.savedValues[index].set(0)
-            self.valueCheck = Checkbutton(listFrame, text=value, variable=self.savedValues[index])
-            self.valueCheck.pack()
+            # self.savedValues[index].set(0)
+            # self.valueCheck = Checkbutton(listFrame, text=value, variable=self.savedValues[index])
+            # self.valueCheck.pack()
 
-        self.compareBtn_text = tk.StringVar()
-        compareBtn = tk.Button(listFrame,
-                           textvariable=self.compareBtn_text,
-                           command=self.compareGraphs)
-        compareBtn.pack()
-        self.compareBtn_text.set("Compare")
+        #Create dynamic option variables for dropdown and monitor when they are changed
+        self.option1Var = tk.StringVar()
+        self.option1Var.trace("w", self.optionMenu_callback)
+        self.option2Var = tk.StringVar()
+        self.option2Var.trace("w", self.optionMenu_callback)
+
+        #Create popup menus
+        self.popupMenu = OptionMenu(listFrame, self.option1Var, *self.newVals)
+        self.popupMenu2 = OptionMenu(listFrame, self.option2Var, *self.newVals)
+
+        #If there are more than 2 values, you can compare them, so set these to the first 2
+        #If not, set them to 'NA' and disable them
+        if len(self.newVals) > 2:
+            self.option1Var.set(self.newVals[0])
+            self.option2Var.set(self.newVals[1])
+        else:
+            self.popupMenu.configure(state="disabled")
+            self.popupMenu2.configure(state="disabled")
+            self.option1Var.set('NA')
+            self.option2Var.set('NA')
+
+        #Grid headings and popup menus
+        Label(listFrame, text="Select first recording").grid(row=0, column=0, sticky=W, pady=10, columnspan=3)
+        self.popupMenu.grid(row=1, column=0, columnspan=3)
+        Label(listFrame, text="Select second recording").grid(row=2, column=0, sticky=W, pady=10, columnspan=3)
+        self.popupMenu2.grid(row=3, column=0, columnspan=3)
+
+        #Only activate compare button if there are at least 2 items to compare
+        if len(self.newVals) > 2:
+            self.compareBtn = tk.Button(listFrame, text="COMPARE",
+                               command=self.compareGraphs, padx=15, pady=8)
+        else:
+            self.compareBtn = tk.Button(listFrame,
+                               text="COMPARE",
+                               command=self.compareGraphs, state=DISABLED, padx=15, pady=8)
+
+        #Reset button starts inactive and only becomes active after a comparison
+        self.resetBtn = tk.Button(listFrame,
+                           text="RESET", state=DISABLED, padx=15, pady=8)
+
+        self.compareBtn.grid(row=4, column=0)
+        self.resetBtn.grid(row=4, column=1)
+        listFrame.grid_rowconfigure(4, minsize=100)
+
+    def optionMenu_callback(*args):
+        print "variable changed!"
 
     def compareGraphs(self):
+        #This function extracts the data from the 2 files and displays both on the graph
+        #It also deactivates the compare button and actives the reset button
 
-        graphNames = []
-        self.savedVals2 = os.listdir(appDataPath)
-        for index, value in enumerate(self.savedValues):
-            if value.get() == 1:
-                graphNames.append(self.savedVals2[index])
+        #Disable compare button and dropdowns
+        self.compareBtn.configure(state="disabled")
+        self.resetBtn.configure(state="active")
+        self.popupMenu.configure(state="disabled")
+        self.popupMenu2.configure(state="disabled")
 
-        """for index, graph in enumerate(graphNames):
-            fullName = appDataPath + str(graph)
-            f = open(fullName, 'r')
-            lines = f.readlines()
-            valListA = []
-            #valListB = []
-            valListC = []
+        #Get values from dropdown menu
+        compareOne = self.option1Var.get()
+        compareTwo = self.option2Var.get()
 
-            for i in range(len(lines)-1):
-                valListA.append(float(lines[i].split(' ')[0]))
-                #valListB.append(float(lines[i].split(' ')[1]))
-                valListC.append(float(lines[i].split(' ')[2]))"""
-
-        fullName1 = appDataPath + str(graphNames[0])
-        print fullName1
+        #Assemble full names of file path and read data
+        fullName1 = appDataPath + compareOne + '.txt'
         f1 = open(fullName1, 'r')
         lines1 = f1.readlines()
+
+        #Create empty arrays to store data
         valListA1 = []
         #valListB = []
         valListC1 = []
 
-        for i in range(len(lines1)-1):
+        #Find amount of lines before 'DETAILS' word. Note comparison graphs have to be
+        #the same length
+        count = 0
+        for i in range(len(lines1)):
+            leftCol = lines1[i].split(' ')[0]
+            if leftCol == 'DETAILS':
+                count = i
+                break
+
+        #Split up data based on column
+        for i in range(count):
             valListA1.append(float(lines1[i].split(' ')[0]))
             #valListB.append(float(lines[i].split(' ')[1]))
             valListC1.append(float(lines1[i].split(' ')[2]))
 
-        fullName2 = appDataPath + str(graphNames[1])
+        fullName2 = appDataPath + compareTwo + '.txt'
         print fullName2
         f2 = open(fullName2, 'r')
         lines2 = f2.readlines()
@@ -657,12 +711,14 @@ class ComparePage(tk.Frame):
         #valListB = []
         valListC2 = []
 
-        for i in range(len(lines2)-1):
-            valListA2.append(float(lines2[i].split(' ')[3]))
+        for i in range(count):
+            valListA2.append(float(lines2[i].split(' ')[0]))
             #valListB.append(float(lines[i].split(' ')[1]))
-            valListC2.append(float(lines2[i].split(' ')[1]))
+            valListC2.append(float(lines2[i].split(' ')[2]))
+            #Total time is the last value on the 4th column
+            totalTime = float(lines2[i].split(' ')[3])
 
-        totalTime = 2
+        #Set up graph
         incA = totalTime/float(len(valListA1))
         tA= np.arange(0.0, totalTime, incA)
 
@@ -674,6 +730,7 @@ class ComparePage(tk.Frame):
         minY = 0
         maxY = 1024
 
+        #Set values
         self.line1.set_data(tA,valListA1)
         self.line2.set_data(tA,valListC1)
         self.line3.set_data(tA,valListA2)
@@ -681,14 +738,13 @@ class ComparePage(tk.Frame):
         ax = self.canvas.figure.axes[0]
         ax.yaxis.set_minor_locator(minorLocatory)
         ax.xaxis.set_minor_locator(minorLocator)
+
         # Set grid to use minor tick locations.
         ax.grid(True, which = 'minor')
 
         ax.set_ylim(minY, maxY)
         ax.set_xlim(min(tA), max(tA))
         self.canvas.draw()
-
-
 
 
 app =  App_Window()
