@@ -305,7 +305,6 @@ class  App_Window(tk.Tk):
         self.show_frame(StartPage)
 
     def show_frame(self, cont):
-
         frame = self.frames[cont]
         frame.tkraise()
 
@@ -431,6 +430,9 @@ class StartPage(tk.Frame):
         self.data1 = Label(plotFrame, textvariable=self.data1Txt).grid(row=3, column=0, sticky=W)
         self.data2 = Label(plotFrame, textvariable=self.data2Txt).grid(row=4, column=0, sticky=W)
         self.data3 = Label(plotFrame, textvariable=self.data3Txt).grid(row=5, column=0, sticky=W)
+
+    def testFunc(self):
+        print "TEST"
 
     def saveBtn(self):
         self.saved.set("Saved")
@@ -603,6 +605,29 @@ class ComparePage(tk.Frame):
         self.canvas._tkcanvas.grid(row=1, column=0, columnspan=6, pady=8)
         self.update
 
+        #Create blank fields for data to sit in and variables to be reset
+        self.g1heading = tk.StringVar()
+        self.g1clicksc = tk.StringVar()
+        self.g1clicksr = tk.StringVar()
+        self.g1temp = tk.StringVar()
+        self.g1notes = tk.StringVar()
+        self.graph1Heading = Label(plotFrame, textvariable=self.g1heading).grid(row=2, column=0)
+        self.graph1clicksC = Label(plotFrame, textvariable=self.g1clicksc).grid(row=3, column=0)
+        self.graph1clicks4 = Label(plotFrame, textvariable=self.g1clicksr).grid(row=4, column=0)
+        self.graph1Temp = Label(plotFrame, textvariable=self.g1temp).grid(row=5, column=0)
+        self.graph1Notes = Label(plotFrame, textvariable=self.g1notes).grid(row=6, column=0)
+
+        self.g2heading = tk.StringVar()
+        self.g2clicksc = tk.StringVar()
+        self.g2clicksr = tk.StringVar()
+        self.g2temp = tk.StringVar()
+        self.g2notes = tk.StringVar()
+        self.graph2Heading = Label(plotFrame, textvariable=self.g2heading).grid(row=2, column=3)
+        self.graph2clicksC = Label(plotFrame, textvariable=self.g2clicksc).grid(row=3, column=3)
+        self.graph2clicks4 = Label(plotFrame, textvariable=self.g2clicksr).grid(row=4, column=3)
+        self.graph2Temp = Label(plotFrame, textvariable=self.g2temp).grid(row=5, column=3)
+        self.graph2Notes = Label(plotFrame, textvariable=self.g2notes).grid(row=6, column=3)
+
         #Get list of filenames from appdata folder
         self.savedValues = os.listdir(appDataPath)
 
@@ -611,11 +636,6 @@ class ComparePage(tk.Frame):
         for index, value in enumerate(self.savedValues):
             value = value.split('.')[0]
             self.newVals.append(value)
-            # self.savedValues[index] = IntVar()
-            #checkVar = IntVar()
-            # self.savedValues[index].set(0)
-            # self.valueCheck = Checkbutton(listFrame, text=value, variable=self.savedValues[index])
-            # self.valueCheck.pack()
 
         #Create dynamic option variables for dropdown and monitor when they are changed
         self.option1Var = tk.StringVar()
@@ -638,13 +658,18 @@ class ComparePage(tk.Frame):
             self.option1Var.set('NA')
             self.option2Var.set('NA')
 
+        #Refresh button to check for new recordings
+        self.refreshBtn = tk.Button(listFrame, text="Refresh List",
+                           command=self.updateVals).grid(row=0, column=0, sticky=W)
+
         #Grid headings and popup menus
-        Label(listFrame, text="Select first recording").grid(row=0, column=0, sticky=W, pady=10, columnspan=3)
-        self.popupMenu.grid(row=1, column=0, columnspan=3)
-        Label(listFrame, text="Select second recording").grid(row=2, column=0, sticky=W, pady=10, columnspan=3)
-        self.popupMenu2.grid(row=3, column=0, columnspan=3)
+        Label(listFrame, text="Select first recording").grid(row=1, column=0, sticky=W, pady=10, columnspan=3)
+        self.popupMenu.grid(row=2, column=0, columnspan=3)
+        Label(listFrame, text="Select second recording").grid(row=3, column=0, sticky=W, pady=10, columnspan=3)
+        self.popupMenu2.grid(row=4, column=0, columnspan=3)
 
         #Only activate compare button if there are at least 2 items to compare
+        # if len(self.newVals) > 2:
         if len(self.newVals) > 2:
             self.compareBtn = tk.Button(listFrame, text="COMPARE",
                                command=self.compareGraphs, padx=15, pady=8)
@@ -652,17 +677,62 @@ class ComparePage(tk.Frame):
             self.compareBtn = tk.Button(listFrame,
                                text="COMPARE",
                                command=self.compareGraphs, state=DISABLED, padx=15, pady=8)
+            #Show message saying there are no recordings
+            Label(listFrame, text="You have no saved recordings yet :-(").grid(row=6, column=0, sticky=W, pady=10, columnspan=3)
 
         #Reset button starts inactive and only becomes active after a comparison
         self.resetBtn = tk.Button(listFrame,
-                           text="RESET", state=DISABLED, padx=15, pady=8)
+                           text="RESET",
+                           command=self.resetGraphs, state=DISABLED, padx=15, pady=8)
 
-        self.compareBtn.grid(row=4, column=0)
-        self.resetBtn.grid(row=4, column=1)
-        listFrame.grid_rowconfigure(4, minsize=100)
+        self.compareBtn.grid(row=5, column=0)
+        self.resetBtn.grid(row=5, column=1)
+        listFrame.grid_rowconfigure(5, minsize=100)
 
-    def optionMenu_callback(*args):
-        print "variable changed!"
+    def updateVals(self):
+        oldVals = self.newVals
+        newList = os.listdir(appDataPath)
+        if len(self.savedValues) > 2:
+            self.option1Var.set(self.newVals[0])
+            self.option2Var.set(self.newVals[1])
+        else:
+            self.popupMenu.configure(state="disabled")
+            self.popupMenu2.configure(state="disabled")
+            self.option1Var.set('NA')
+            self.option2Var.set('NA')
+
+        #Work out new vals
+        newVals = []
+        for index, value in enumerate(newList):
+            value = value.split('.')[0]
+            newVals.append(value)
+
+        # Delete all old options
+        self.popupMenu.children['menu'].delete(0, 'end')
+        self.popupMenu2.children['menu'].delete(0, 'end')
+
+        # Insert list of new options (tk._setit hooks them up to val)
+        for val in newVals:
+            self.popupMenu.children['menu'].add_command(label=val, command=tk._setit(self.option1Var, val))
+            self.popupMenu2.children['menu'].add_command(label=val, command=tk._setit(self.option1Var, val))
+        # print "New array length"
+        # print len(newArr)
+        # lastIndex = len(oldVals)
+        # m = self.popupMenu.children['menu']
+        # m2 = self.popupMenu2.children['menu']
+        # #menu = dropdown['menu']
+        #
+        #
+        # for j in range(len(newVals)):
+        #     print newVals[j]
+        #     print j
+        #     m.entryconfig(j, label=newVals[j])
+            #m2.entryconfig(lastIndex+index, label=val)
+
+
+    def optionMenu_callback(self, *args):
+        # self.savedValues = os.listdir(appDataPath)
+        print "CHANGES"
 
     def compareGraphs(self):
         #This function extracts the data from the 2 files and displays both on the graph
@@ -673,6 +743,10 @@ class ComparePage(tk.Frame):
         self.resetBtn.configure(state="active")
         self.popupMenu.configure(state="disabled")
         self.popupMenu2.configure(state="disabled")
+
+        #Print headings
+        self.g1heading.set('FIRST RECORDING')
+        self.g2heading.set('SECOND RECORDING')
 
         #Get values from dropdown menu
         compareOne = self.option1Var.get()
@@ -699,7 +773,7 @@ class ComparePage(tk.Frame):
 
         #Split up data based on column
         for i in range(count):
-            valListA1.append(float(lines1[i].split(' ')[0]))
+            valListA1.append(float(lines1[i].split(' ')[1]))
             #valListB.append(float(lines[i].split(' ')[1]))
             valListC1.append(float(lines1[i].split(' ')[2]))
 
@@ -712,11 +786,48 @@ class ComparePage(tk.Frame):
         valListC2 = []
 
         for i in range(count):
-            valListA2.append(float(lines2[i].split(' ')[0]))
+            valListA2.append(float(lines2[i].split(' ')[1]))
             #valListB.append(float(lines[i].split(' ')[1]))
             valListC2.append(float(lines2[i].split(' ')[2]))
             #Total time is the last value on the 4th column
-            totalTime = float(lines2[i].split(' ')[3])
+            totalTime = float(lines2[i].split(' ')[0])
+
+        print "COUNT IS"
+        print count
+        print lines1[1003]
+        #Retrieve details but if they are blank write Not Set
+        clicksC1 = lines1[count+2]
+        if clicksC1 == 'NA':
+            clicksC1 = 'Not Set'
+        self.g1clicksc.set(clicksC1)
+        clicksR1 = lines1[count+4]
+        if clicksR1 == 'NA':
+            clicksR1 = 'Not Set'
+        self.g1clicksr.set(clicksR1)
+        temp1 = lines1[count+6]
+        if temp1 == 'NA':
+            temp1 = 'Not Set'
+        self.g1temp.set(temp1)
+        notes1 = lines1[count+8]
+        if notes1 == 'NA':
+            notes1 = 'Not Set'
+        self.g1notes.set(notes1)
+        clicksC2 = lines2[count+2]
+        if clicksC2 == 'NA':
+            clicksC2 = 'Not Set'
+        self.g2clicksc.set(clicksC2)
+        clicksR2 = lines2[count+4]
+        if clicksR2 == 'NA':
+            clicksR2 = 'Not Set'
+        self.g2clicksr.set(clicksR2)
+        temp2 = lines2[count+6]
+        if temp2 == 'NA':
+            temp2 = 'Not Set'
+        self.g2temp.set(temp2)
+        notes2 = lines2[count+8]
+        if notes2 == 'NA':
+            notes2 = 'Not Set'
+        self.g12notes.set(notes2)
 
         #Set up graph
         incA = totalTime/float(len(valListA1))
@@ -745,6 +856,34 @@ class ComparePage(tk.Frame):
         ax.set_ylim(minY, maxY)
         ax.set_xlim(min(tA), max(tA))
         self.canvas.draw()
+
+    def resetGraphs(self):
+        #Re-enable buttons
+        self.compareBtn.configure(state="active")
+        self.resetBtn.configure(state="disabled")
+        self.popupMenu.configure(state="active")
+        self.popupMenu2.configure(state="active")
+
+        #Reset text fields
+        self.g1heading.set("")
+        self.g1clicksc.set("")
+        self.g1clicksr.set("")
+        self.g1temp.set("")
+        self.g1notes.set("")
+        self.g2heading.set("")
+        self.g2clicksc.set("")
+        self.g2clicksr.set("")
+        self.g2temp.set("")
+        self.g12notes.set("")
+
+        #Clear graph
+        self.line1.set_data([],[])
+        self.line2.set_data([],[])
+        self.line3.set_data([],[])
+        self.line4.set_data([],[])
+        ax = self.canvas.figure.axes[0]
+        self.canvas.draw()
+
 
 
 app =  App_Window()
