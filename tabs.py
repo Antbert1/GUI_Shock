@@ -13,23 +13,41 @@ from Tkinter import *
 import ttk
 import numpy as np
 import serial
+import serial.tools.list_ports
 import os
 import time
 from datetime import datetime
 
 #Create path for saving files
 appDataPath = os.getenv('LOCALAPPDATA') + '\\shockData\\'
+configPath = os.getenv('LOCALAPPDATA') + '\\shockData\\config\\config.txt'
 if not os.path.exists(appDataPath):
     os.makedirs(appDataPath)
+if not os.path.exists(os.path.dirname(configPath)):
+    os.makedirs(os.path.dirname(configPath))
+    configFile = open(configPath, "w")
+    configFile.close()
+
+#Get initial port list that can be refreshed later
+portList = list(serial.tools.list_ports.comports())
+#Slice the portlist to make it more readable
+slicedPortList = []
+for port in portList:
+    slicedPortList.append(str(port).split(' ')[0])
+
+
+
+# with open(configPath, "w") as f:
+#     f.write("FOOBAR")
 
 #Give option for test data or real data
-testFlag = raw_input("Test? 1 for yes, 0 for no. ")
-#testFlag = 0
+#testFlag = raw_input("Test? 1 for yes, 0 for no. ")
+testFlag = '0'
 min_val = 0
 max_val = 1024
 
 #Set the port number. Ultimately this will be a UI option
-port = 'com6'
+#port = 'com6'
 
 #This is an empty array of data that will be populated later with the values from the serial port
 valList = []
@@ -175,7 +193,7 @@ def saveDataAsTxt(fileName, valListA, valListB, valListC, tA, extraVals):
         F.write('NA')
 
 #Get data from serial port
-def runLoop(fileName):
+def runLoop(fileName, testFlag, port):
     print "TEST FLAG IS " + testFlag
     if testFlag == '1':
         print "REAL TEST"
@@ -333,20 +351,66 @@ class StartPage(tk.Frame):
 
 
     def initialize(self):
+        #Testflag and port number intiialise
+        self.testFlag = '0'
+        self.portNumber = ''
+
         #Line to cut off menu
         menuSeparator = Frame(self, height=1, bg="grey").pack(side="top", fill="both")
+
+        #Top row for configuration
+        configRow = Frame(self)
+        configRow.pack(side="top", fill="both")
+
+        #Allow user to tick box to indicate a real test or not
+        self.testTF = IntVar()
+        checkBtnTxt = Label(configRow, text="Record? Check box for true").grid(row=0,column=0,sticky=W)
+        checkBtn = Checkbutton(configRow, text="", variable=self.testTF, justify=LEFT)
+        self.testTF.trace("w", self.testTF_callback)
+        checkBtn.grid(row=0, column=1)
+
+        #Create dropdown for port selection
+        portNumText = Label(configRow, text="Select port number").grid(row=0, column=2)
+        self.portNum = tk.StringVar()
+        #Check if portNum is set in the config file, if so and if it's available, default it to that
+        configFile = open(configPath, "r")
+        lastPort = configFile.read()
+        #If there is an entry in the config file, check it's listed in the current ports
+        #If so, default it to this
+        portExists = False
+        if len(lastPort) > 0:
+            for port in slicedPortList:
+                if port == lastPort:
+                    portExists = True
+                    break
+
+        if portExists == True:
+            self.portNum.set(lastPort)
+
+        #Detect changes in dropdown
+        self.portNum.trace("w", self.portNum_callback)
+
+        if len(slicedPortList) > 0:
+            self.portNums = slicedPortList
+        else:
+            self.portNums = [' ']
+
+        self.portNumPopup = OptionMenu(configRow, self.portNum, *self.portNums)
+        self.portNumPopup.grid(row=0, column=3)
+
+        configSeparator = Frame(self, height=1, bg="grey").pack(side="top", fill="both")
 
         frame = Frame(self)
         frame.pack(side="left", fill="both", padx=10, pady=10)
 
         #Left-hand-side
-        self.l1 = Label(frame, text="INPUT FIELDS").grid(row=0, sticky=W, columnspan=3)
+        self.l1 = Label(frame, text="INPUT FIELDS").grid(row=1, sticky=W, columnspan=3)
 
-        self.l2 = Label(frame, text="Name *").grid(row=1, sticky=W, columnspan=3)
-        self.l3 = Label(frame, text="Clicks (C)").grid(row=3, sticky=W, columnspan=3)
-        self.l4 = Label(frame, text="Clicks (R)").grid(row=5, sticky=W, columnspan=3)
-        self.l5 = Label(frame, text="Temp").grid(row=7, sticky=W, columnspan=3)
-        self.l6 = Label(frame, text="Notes").grid(row=9, sticky=W, columnspan=3)
+        self.l2 = Label(frame, text="Name *").grid(row=2, sticky=W, columnspan=3)
+        self.l3 = Label(frame, text="Clicks (C)").grid(row=4, sticky=W, columnspan=3)
+        self.l4 = Label(frame, text="Clicks (R)").grid(row=6, sticky=W, columnspan=3)
+        self.l5 = Label(frame, text="Temp").grid(row=8, sticky=W, columnspan=3)
+        self.l6 = Label(frame, text="Notes").grid(row=10, sticky=W, columnspan=3)
         self.defaultName = tk.StringVar(frame, value='Timestamp')
         self.e2txt = tk.StringVar()
         self.e3txt = tk.StringVar()
@@ -361,11 +425,11 @@ class StartPage(tk.Frame):
         self.e4 = Entry(frame, width=30, textvariable=self.e4txt)
         self.e5 = Text(frame,width=23, height=5)
 
-        self.e1.grid(row=2, column=0,sticky=W, columnspan=3)
-        self.e2.grid(row=4, column=0,sticky=W, columnspan=3)
-        self.e3.grid(row=6, column=0,sticky=W, columnspan=3)
-        self.e4.grid(row=8, column=0,sticky=W, columnspan=3)
-        self.e5.grid(row=10, column=0,sticky=W, columnspan=3)
+        self.e1.grid(row=3, column=0,sticky=W, columnspan=3)
+        self.e2.grid(row=5, column=0,sticky=W, columnspan=3)
+        self.e3.grid(row=7, column=0,sticky=W, columnspan=3)
+        self.e4.grid(row=9, column=0,sticky=W, columnspan=3)
+        self.e5.grid(row=11, column=0,sticky=W, columnspan=3)
 
         self.btn_text = tk.StringVar()
         self.saveTxt = tk.StringVar()
@@ -374,15 +438,15 @@ class StartPage(tk.Frame):
         self.startBtn = tk.Button(frame,
                            textvariable=self.btn_text,command=self.OnButtonClick, padx=15, pady=8)
         self.btn_text.set("START")
-        self.startBtn.grid(row=11, column=0)
+        self.startBtn.grid(row=12, column=0)
 
         self.btn_text2 = tk.StringVar()
         self.resetBtn = tk.Button(frame,
                            textvariable=self.btn_text2,
                            command=self.resetGraph, state=DISABLED, padx=15, pady=8)
         self.btn_text2.set("RESET")
-        self.resetBtn.grid(row=11, column=1)
-        frame.grid_rowconfigure(11, minsize=50)
+        self.resetBtn.grid(row=12, column=1)
+        frame.grid_rowconfigure(12, minsize=50)
 
 
         plotFrame = Frame(self)
@@ -391,15 +455,15 @@ class StartPage(tk.Frame):
                            textvariable=self.saveTxt,
                            command=self.saveBtn, state=DISABLED, padx=20, pady=8)
         self.saveTxt.set("SAVE")
-        self.saveBtn.grid(row=2, column=4, sticky=E)
+        self.saveBtn.grid(row=3, column=4, sticky=E)
 
         self.discardBtn = tk.Button(plotFrame,
                            textvariable=self.discardTxt,
                            command=self.resetGraph, state=DISABLED, padx=15, pady=8)
         self.discardTxt.set("DISCARD")
-        self.discardBtn.grid(row=2, column=5)
+        self.discardBtn.grid(row=3, column=5)
 
-        Label(plotFrame, text="GRAPH").grid(row=0, column=0, sticky=W)
+        Label(plotFrame, text="GRAPH").grid(row=1, column=0, sticky=W)
 
         self.f = Figure(figsize=(6,4), dpi=100)
         a = self.f.add_subplot(111)
@@ -419,20 +483,29 @@ class StartPage(tk.Frame):
         self.canvas = FigureCanvasTkAgg(self.f, plotFrame)
         self.canvas.show()
 
-        self.canvas._tkcanvas.grid(row=1, column=0, columnspan=6, pady=8)
+        self.canvas._tkcanvas.grid(row=2, column=0, columnspan=6, pady=8)
         self.update
         self.data1Txt = tk.StringVar()
         self.data2Txt = tk.StringVar()
         self.data3Txt = tk.StringVar()
         self.saved = tk.StringVar()
-        self.savedTxt = Label(plotFrame, textvariable=self.saved).grid(row=2, column=0, sticky=W)
+        self.savedTxt = Label(plotFrame, textvariable=self.saved).grid(row=3, column=0, sticky=W)
         # toolbar = NavigationToolbar2TkAgg(self.canvas, plotFrame).grid(row=2, column=0, columnspan=6, sticky=W)
-        self.data1 = Label(plotFrame, textvariable=self.data1Txt).grid(row=3, column=0, sticky=W)
-        self.data2 = Label(plotFrame, textvariable=self.data2Txt).grid(row=4, column=0, sticky=W)
-        self.data3 = Label(plotFrame, textvariable=self.data3Txt).grid(row=5, column=0, sticky=W)
+        self.data1 = Label(plotFrame, textvariable=self.data1Txt).grid(row=4, column=0, sticky=W)
+        self.data2 = Label(plotFrame, textvariable=self.data2Txt).grid(row=5, column=0, sticky=W)
+        self.data3 = Label(plotFrame, textvariable=self.data3Txt).grid(row=6, column=0, sticky=W)
 
-    def testFunc(self):
-        print "TEST"
+    def testTF_callback(self, *args):
+        if self.testTF.get() == 1:
+            self.testFlag = '1'
+        else:
+            self.testFlag = '0'
+
+    def portNum_callback(self, *args):
+        print "PORT CALLBACK"
+        self.portNumber = self.portNum.get()
+        configFile = open(configPath, "w")
+        configFile.write(self.portNumber)
 
     def saveBtn(self):
         self.saved.set("Saved")
@@ -542,7 +615,7 @@ class StartPage(tk.Frame):
             fileName = timeStamp
         else:
             fileName = fileName + '.txt'
-    	values = runLoop(fileName)
+    	values = runLoop(fileName, self.testFlag, self.portNumber)
         self.fileName = fileName
         self.tA = values[0]
         self.valListA = values[1]
@@ -792,9 +865,6 @@ class ComparePage(tk.Frame):
             #Total time is the last value on the 4th column
             totalTime = float(lines2[i].split(' ')[0])
 
-        print "COUNT IS"
-        print count
-        print lines1[1003]
         #Retrieve details but if they are blank write Not Set
         clicksC1 = lines1[count+2]
         if clicksC1 == 'NA':
