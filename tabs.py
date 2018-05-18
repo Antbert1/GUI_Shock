@@ -364,7 +364,7 @@ class StartPage(tk.Frame):
 
         #Allow user to tick box to indicate a real test or not
         self.testTF = IntVar()
-        checkBtnTxt = Label(configRow, text="Record? Check box for true").grid(row=0,column=0,sticky=W)
+        checkBtnTxt = Label(configRow, text="Record? Check box for true").grid(row=0,column=0,padx=(10,0), sticky=W)
         checkBtn = Checkbutton(configRow, text="", variable=self.testTF, justify=LEFT)
         self.testTF.trace("w", self.testTF_callback)
         checkBtn.grid(row=0, column=1)
@@ -383,20 +383,28 @@ class StartPage(tk.Frame):
                 if port == lastPort:
                     portExists = True
                     break
-
         if portExists == True:
             self.portNum.set(lastPort)
+
+        self.portNumber = self.portNum.get()
 
         #Detect changes in dropdown
         self.portNum.trace("w", self.portNum_callback)
 
+        #Because option menu needs some options, set this to blank if it's empty
         if len(slicedPortList) > 0:
             self.portNums = slicedPortList
         else:
             self.portNums = [' ']
 
         self.portNumPopup = OptionMenu(configRow, self.portNum, *self.portNums)
+        if self.portNums == [' ']:
+            self.portNumPopup.configure(state="disabled")
+
         self.portNumPopup.grid(row=0, column=3)
+        self.portRefreshBtn = tk.Button(configRow,
+                           text='Refresh Port List',command=self.refreshPorts)
+        self.portRefreshBtn.grid(row=0, column=4)
 
         configSeparator = Frame(self, height=1, bg="grey").pack(side="top", fill="both")
 
@@ -438,6 +446,11 @@ class StartPage(tk.Frame):
         self.startBtn = tk.Button(frame,
                            textvariable=self.btn_text,command=self.OnButtonClick, padx=15, pady=8)
         self.btn_text.set("START")
+
+        if self.portNum.get() == '':
+            print "PORT SET IS "
+            print self.portNum.get()
+            self.startBtn.configure(state='disabled')
         self.startBtn.grid(row=12, column=0)
 
         self.btn_text2 = tk.StringVar()
@@ -447,6 +460,10 @@ class StartPage(tk.Frame):
         self.btn_text2.set("RESET")
         self.resetBtn.grid(row=12, column=1)
         frame.grid_rowconfigure(12, minsize=50)
+
+        #Error message for invalid port number
+        self.errorMsgTxt = StringVar()
+        self.errorMsg = Label(frame, textvariable=self.errorMsgTxt).grid(row=13, columnspan=3)
 
 
         plotFrame = Frame(self)
@@ -495,6 +512,30 @@ class StartPage(tk.Frame):
         self.data2 = Label(plotFrame, textvariable=self.data2Txt).grid(row=5, column=0, sticky=W)
         self.data3 = Label(plotFrame, textvariable=self.data3Txt).grid(row=6, column=0, sticky=W)
 
+    def refreshPorts(self):
+        #Don't set a val, so user is forced to
+        self.portNum.set('')
+        portListNew = list(serial.tools.list_ports.comports())
+        #Slice the portlist to make it more readable
+        slicedPortListNew = []
+        for port in portListNew:
+            slicedPortListNew.append(str(port).split(' ')[0])
+
+        if len(slicedPortListNew) > 0:
+            self.portNumPopup.configure(state="active")
+        else:
+            self.startBtn.configure(state='disabled')
+            self.portNumPopup.configure(state="disabled")
+            slicedPortListNew = [' ']
+
+        # Delete all old options
+        self.portNumPopup.children['menu'].delete(0, 'end')
+
+        # Insert list of new options (tk._setit hooks them up to val)
+        for val in slicedPortListNew:
+            self.portNumPopup.children['menu'].add_command(label=val, command=tk._setit(self.portNum, val))
+
+
     def testTF_callback(self, *args):
         if self.testTF.get() == 1:
             self.testFlag = '1'
@@ -502,7 +543,8 @@ class StartPage(tk.Frame):
             self.testFlag = '0'
 
     def portNum_callback(self, *args):
-        print "PORT CALLBACK"
+        if self.portNum.get() != '':
+            self.startBtn.configure(state='active')
         self.portNumber = self.portNum.get()
         configFile = open(configPath, "w")
         configFile.write(self.portNumber)
@@ -526,6 +568,7 @@ class StartPage(tk.Frame):
         self.clearGraph()
 
     def clearGraph(self):
+        self.errorMsgTxt.set("")
         self.startBtn.config(state='normal')
         self.resetBtn.config(state='disabled')
         self.saveBtn.config(state='disabled')
@@ -587,6 +630,7 @@ class StartPage(tk.Frame):
         self.canvas.draw()
 
     def OnButtonClick(self):
+        self.errorMsgTxt.set("")
         self.startBtn.config(state='disabled')
         self.resetBtn.config(state='normal')
         self.saveBtn.config(state='normal')
@@ -615,13 +659,23 @@ class StartPage(tk.Frame):
             fileName = timeStamp
         else:
             fileName = fileName + '.txt'
-    	values = runLoop(fileName, self.testFlag, self.portNumber)
-        self.fileName = fileName
-        self.tA = values[0]
-        self.valListA = values[1]
-        self.valListB = values[2]
-        self.valListC = values[3]
-        self.refreshFigure(values[0],values[1],values[2],values[3],values[4],values[5], values[6], values[7], values[8], values[9], values[10], values[11])
+
+        #Wrap this in a try-except to catch port exceptions
+        errorCode = 0
+        try:
+        	values = runLoop(fileName, self.testFlag, self.portNumber)
+        except:
+            print "ERROR"
+            errorCode = 1
+            self.errorMsgTxt.set("ERROR, CHECK YOUR PORTS.")
+        #Only run these if there was no error
+        if errorCode == 0:
+            self.fileName = fileName
+            self.tA = values[0]
+            self.valListA = values[1]
+            self.valListB = values[2]
+            self.valListC = values[3]
+            self.refreshFigure(values[0],values[1],values[2],values[3],values[4],values[5], values[6], values[7], values[8], values[9], values[10], values[11])
 
 
 class ComparePage(tk.Frame):
