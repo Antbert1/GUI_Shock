@@ -1,4 +1,6 @@
-# import modules that I'm using
+# The code for changing pages was derived from: http://stackoverflow.com/questions/7546050/switch-between-two-frames-in-tkinter
+# License: http://creativecommons.org/licenses/by-sa/3.0/
+
 import matplotlib
 matplotlib.use('TKAgg')
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
@@ -20,8 +22,8 @@ if not os.path.exists(appDataPath):
     os.makedirs(appDataPath)
 
 #Give option for test data or real data
-testFlag = input("Test? 1 for yes, 0 for no. ")
-#These variables are set at the start to be used later on in the plotting. As long as they are 'in scope' and are set before you try to use them, it doesn't matter where you set them. Being in scope means being declared where you are using them. An example of being out of scope would be if you had a "main" function, and a separate "graph" function that is called inside main. If you declare a variable min_val inside the graph function, and try to use it in the main, it won't work because main can't see it.
+testFlag = raw_input("Test? 1 for yes, 0 for no. ")
+#testFlag = 0
 min_val = 0
 max_val = 1024
 
@@ -35,7 +37,6 @@ valList = []
 def writeToFile(valListA, valListB, valListC):
     valFiles = ["testfileA.txt", "testfileB.txt", "testfileC.txt"]
     valLists = [valListA, valListB, valListC]
-
     for index, file in enumerate(valFiles):
         valFile = open(file, "w")
         for val in valLists[index]:
@@ -48,21 +49,21 @@ def writeToFile(valListA, valListB, valListC):
 
 #Set up 3 data streams
 def testData():
-    fA = open('Test Results 1/testFileA.txt', 'r')
+    fA = open('Test Results 3/testFileA.txt', 'r')
     fLinesA = fA.read().split('\n')
     valListA = []
     for aLine in fLinesA:
         if aLine.strip():
             valListA.append(int(aLine))
 
-    fB = open('Test Results 1/testFileB.txt', 'r')
+    fB = open('Test Results 3/testFileB.txt', 'r')
     fLinesB = fB.read().split('\n')
     valListB = []
     for bLine in fLinesB:
         if bLine.strip():
             valListB.append(int(bLine))
 
-    fC = open('Test Results 1/testFileC.txt', 'r')
+    fC = open('Test Results 3/testFileC.txt', 'r')
     fLinesC = fC.read().split('\n')
     valListC = []
     for cLine in fLinesC:
@@ -250,13 +251,50 @@ def runLoop(fileName):
     values = [tA,valListA,valListB,valListC,topPeakToTrough[0],topPeakToTrough[1], bottomPeakToTrough[0], bottomPeakToTrough[1], topTroughToPeak[0], topTroughToPeak[1], bottomTroughToPeak[0], bottomTroughToPeak[1]]
     return values
 
-#Make object for application
-class App_Window(tk.Tk):
 
-    def __init__(self,parent):
-        tk.Tk.__init__(self,parent)
+class  App_Window(tk.Tk):
+
+    def __init__(self, *args, **kwargs):
+
+        tk.Tk.__init__(self, *args, **kwargs)
+
+        #tk.Tk.iconbitmap(self, default="clienticon.ico")
+        #tk.Tk.wm_title(self, "Sea of BTC client")
+
+
+        container = tk.Frame(self)
+        container.pack(side="top", fill="both", expand = True)
+        container.grid_rowconfigure(0, weight=1)
+        container.grid_columnconfigure(0, weight=1)
+
+        self.frames = {}
+
+        for F in (StartPage, ComparePage):
+
+            frame = F(container, self)
+
+            self.frames[F] = frame
+
+            frame.grid(row=0, column=0, sticky="nsew")
+
+        self.show_frame(StartPage)
+
+    def show_frame(self, cont):
+
+        frame = self.frames[cont]
+        frame.tkraise()
+
+
+class StartPage(tk.Frame):
+
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self,parent)
         self.parent = parent
         self.initialize()
+        button3 = tk.Button(self, text="Graph Page",
+                            command=lambda: controller.show_frame(ComparePage))
+        button3.pack()
+
     def initialize(self):
         frame = Frame(self)
         frame.pack(side="left", fill="both", expand = True)
@@ -265,13 +303,13 @@ class App_Window(tk.Tk):
         plotFrame.pack(side="right", fill="both", expand = True)
 
         #Left-hand-side
-        self.l1 = Label(frame, text="Heading Text").grid(row=0,columnspan=2)
+        self.l1 = tk.Label(frame, text="Heading Text").grid(row=0,columnspan=2)
 
-        self.l2 = Label(frame, text="Name").grid(row=1, sticky=W)
-        self.l3 = Label(frame, text="Clicks (C)").grid(row=3, sticky=W)
-        self.l4 = Label(frame, text="Clicks (R)").grid(row=5, sticky=W)
-        self.l5 = Label(frame, text="Temp").grid(row=7, sticky=W)
-        self.l6 = Label(frame, text="Notes").grid(row=9, sticky=W)
+        self.l2 = tk.Label(frame, text="Name").grid(row=1, sticky=W)
+        self.l3 = tk.Label(frame, text="Clicks (C)").grid(row=3, sticky=W)
+        self.l4 = tk.Label(frame, text="Clicks (R)").grid(row=5, sticky=W)
+        self.l5 = tk.Label(frame, text="Temp").grid(row=7, sticky=W)
+        self.l6 = tk.Label(frame, text="Notes").grid(row=9, sticky=W)
 
         defaultName = tk.StringVar(frame, value='Timestamp')
 
@@ -425,7 +463,143 @@ class App_Window(tk.Tk):
         self.refreshFigure(values[0],values[1],values[2],values[3],values[4],values[5], values[6], values[7], values[8], values[9], values[10], values[11])
 
 
-if __name__ == "__main__":
-    MainWindow = App_Window(None)
-    MainWindow.minsize(width=800, height=600)
-    MainWindow.mainloop()
+class ComparePage(tk.Frame):
+
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+        #label = tk.Label(self, text="Graph Page!", font=LARGE_FONT)
+        #label.pack(pady=10,padx=10)
+        button1 = tk.Button(self, text="Back to Home",
+                            command=lambda: controller.show_frame(StartPage))
+        button1.pack()
+        self.initialize()
+
+    def initialize(self):
+        listFrame = Frame(self)
+        listFrame.pack(side="left")
+
+        plotFrame = Frame(self)
+        plotFrame.pack(side="right", fill="both", expand = True)
+
+        self.f = Figure(figsize=(6,4), dpi=100)
+        a = self.f.add_subplot(111)
+
+        x = []
+        y = []
+
+        self.line1, = a.plot(x,y,'r')
+        self.line2, = a.plot(x,y,'g')
+        self.line3, = a.plot(x,y,'b')
+        self.line4, = a.plot(x,y,'y')
+
+        self.canvas = FigureCanvasTkAgg(self.f, plotFrame)
+
+        self.canvas.show()
+        self.canvas._tkcanvas.pack(side=tk.TOP, fill=tk.NONE, expand=False, anchor=W)
+        self.update
+        toolbar = NavigationToolbar2TkAgg(self.canvas, plotFrame).pack(side=tk.TOP)
+
+        self.savedValues = os.listdir(appDataPath)
+        for index, value in enumerate(self.savedValues):
+            value = value.split('.')[0]
+            self.savedValues[index] = IntVar()
+            #checkVar = IntVar()
+            self.savedValues[index].set(0)
+            self.valueCheck = Checkbutton(listFrame, text=value, variable=self.savedValues[index])
+            self.valueCheck.pack()
+
+        self.compareBtn_text = tk.StringVar()
+        compareBtn = tk.Button(listFrame,
+                           textvariable=self.compareBtn_text,
+                           command=self.compareGraphs)
+        compareBtn.pack()
+        self.compareBtn_text.set("Compare")
+
+    def compareGraphs(self):
+
+        graphNames = []
+        self.savedVals2 = os.listdir(appDataPath)
+        for index, value in enumerate(self.savedValues):
+            if value.get() == 1:
+                graphNames.append(self.savedVals2[index])
+
+        """for index, graph in enumerate(graphNames):
+            fullName = appDataPath + str(graph)
+            f = open(fullName, 'r')
+            lines = f.readlines()
+            valListA = []
+            #valListB = []
+            valListC = []
+
+            for i in range(len(lines)-1):
+                valListA.append(float(lines[i].split(' ')[0]))
+                #valListB.append(float(lines[i].split(' ')[1]))
+                valListC.append(float(lines[i].split(' ')[2]))"""
+
+        fullName1 = appDataPath + str(graphNames[0])
+        print fullName1
+        f1 = open(fullName1, 'r')
+        lines1 = f1.readlines()
+        valListA1 = []
+        #valListB = []
+        valListC1 = []
+
+        for i in range(len(lines1)-1):
+            valListA1.append(float(lines1[i].split(' ')[0]))
+            #valListB.append(float(lines[i].split(' ')[1]))
+            valListC1.append(float(lines1[i].split(' ')[2]))
+
+        fullName2 = appDataPath + str(graphNames[1])
+        print fullName2
+        f2 = open(fullName2, 'r')
+        lines2 = f2.readlines()
+        valListA2 = []
+        #valListB = []
+        valListC2 = []
+
+        for i in range(len(lines2)-1):
+            valListA2.append(float(lines2[i].split(' ')[3]))
+            #valListB.append(float(lines[i].split(' ')[1]))
+            valListC2.append(float(lines2[i].split(' ')[1]))
+
+        totalTime = 2
+        incA = totalTime/float(len(valListA1))
+        tA= np.arange(0.0, totalTime, incA)
+
+        spacing = 0.1
+        spacingy = 80
+        minorLocator = MultipleLocator(spacing)
+        minorLocatory = MultipleLocator(spacingy)
+
+        minY = 0
+        maxY = 1024
+        """if (indexPtTPeak != None or valPtTPeak != None):
+            self.PtTPeak.set_data(indexPtTPeak,valPtTPeak)
+        if (indexPtTTrough != None or valPtTTrough != None):
+            self.PtTTrough.set_data(indexPtTTrough,valPtTTrough)
+        if (indexTtPPeak != None or valTtPPeak != None):
+            self.TtPPeak.set_data(indexTtPPeak,valTtPPeak)
+        if (indexTtPTrough != None or valTtPTrough != None):
+            self.TtPTrough.set_data(indexTtPTrough,valTtPTrough)"""
+
+        #ax.clear()
+
+        self.line1.set_data(tA,valListA1)
+        self.line2.set_data(tA,valListC1)
+        self.line3.set_data(tA,valListA2)
+        self.line4.set_data(tA,valListC2)
+        ax = self.canvas.figure.axes[0]
+        ax.yaxis.set_minor_locator(minorLocatory)
+        ax.xaxis.set_minor_locator(minorLocator)
+        # Set grid to use minor tick locations.
+        ax.grid(True, which = 'minor')
+
+        ax.set_ylim(minY, maxY)
+        ax.set_xlim(min(tA), max(tA))
+        self.canvas.draw()
+
+
+
+
+app =  App_Window()
+app.mainloop()
