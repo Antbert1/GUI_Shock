@@ -187,10 +187,12 @@ def saveDataAsTxt(fileName, valListA, valListB, valListC, tA, extraVals):
         F.write('NA')
     F.write('\n')
     F.write("NOTES \n")
-    if (len(extraVals[3]) > 0):
+    if (len(extraVals[3].strip()) > 0):
         F.write(extraVals[3])
     else:
         F.write('NA')
+    F.write('\n')
+    F.write('END')
 
 #Get data from serial port
 def runLoop(fileName, testFlag, port):
@@ -738,22 +740,22 @@ class ComparePage(tk.Frame):
         self.g1clicksr = tk.StringVar()
         self.g1temp = tk.StringVar()
         self.g1notes = tk.StringVar()
-        self.graph1Heading = Label(plotFrame, textvariable=self.g1heading).grid(row=2, column=0)
-        self.graph1clicksC = Label(plotFrame, textvariable=self.g1clicksc).grid(row=3, column=0)
-        self.graph1clicks4 = Label(plotFrame, textvariable=self.g1clicksr).grid(row=4, column=0)
-        self.graph1Temp = Label(plotFrame, textvariable=self.g1temp).grid(row=5, column=0)
-        self.graph1Notes = Label(plotFrame, textvariable=self.g1notes).grid(row=6, column=0)
+        self.graph1Heading = Label(plotFrame, textvariable=self.g1heading).grid(row=2, column=0,sticky=W)
+        self.graph1clicksC = Label(plotFrame, textvariable=self.g1clicksc).grid(row=3, column=0, sticky=W)
+        self.graph1clicks4 = Label(plotFrame, textvariable=self.g1clicksr).grid(row=4, column=0, sticky=W)
+        self.graph1Temp = Label(plotFrame, textvariable=self.g1temp).grid(row=5, column=0, sticky=W)
+        self.graph1Notes = Label(plotFrame, textvariable=self.g1notes).grid(row=2, column=1, columnspan=2, sticky=W)
 
         self.g2heading = tk.StringVar()
         self.g2clicksc = tk.StringVar()
         self.g2clicksr = tk.StringVar()
         self.g2temp = tk.StringVar()
         self.g2notes = tk.StringVar()
-        self.graph2Heading = Label(plotFrame, textvariable=self.g2heading).grid(row=2, column=3)
-        self.graph2clicksC = Label(plotFrame, textvariable=self.g2clicksc).grid(row=3, column=3)
-        self.graph2clicks4 = Label(plotFrame, textvariable=self.g2clicksr).grid(row=4, column=3)
-        self.graph2Temp = Label(plotFrame, textvariable=self.g2temp).grid(row=5, column=3)
-        self.graph2Notes = Label(plotFrame, textvariable=self.g2notes).grid(row=6, column=3)
+        self.graph2Heading = Label(plotFrame, textvariable=self.g2heading).grid(row=2, column=3, sticky=W)
+        self.graph2clicksC = Label(plotFrame, textvariable=self.g2clicksc).grid(row=3, column=3, sticky=W)
+        self.graph2clicks4 = Label(plotFrame, textvariable=self.g2clicksr).grid(row=4, column=3, sticky=W)
+        self.graph2Temp = Label(plotFrame, textvariable=self.g2temp).grid(row=5, column=3, sticky=W)
+        self.graph2Notes = Label(plotFrame, textvariable=self.g2notes).grid(row=2, column=4, columnspan=2, sticky=W)
 
         #Get list of filenames from appdata folder
         self.savedValues = os.listdir(appDataPath)
@@ -773,6 +775,8 @@ class ComparePage(tk.Frame):
         #Create popup menus
         self.popupMenu = OptionMenu(listFrame, self.option1Var, *self.newVals)
         self.popupMenu2 = OptionMenu(listFrame, self.option2Var, *self.newVals)
+        self.popupMenu.configure(width=20)
+        self.popupMenu2.configure(width=20)
 
         #If there are more than 2 values, you can compare them, so set these to the first 2
         #If not, set them to 'NA' and disable them
@@ -841,20 +845,7 @@ class ComparePage(tk.Frame):
         # Insert list of new options (tk._setit hooks them up to val)
         for val in newVals:
             self.popupMenu.children['menu'].add_command(label=val, command=tk._setit(self.option1Var, val))
-            self.popupMenu2.children['menu'].add_command(label=val, command=tk._setit(self.option1Var, val))
-        # print "New array length"
-        # print len(newArr)
-        # lastIndex = len(oldVals)
-        # m = self.popupMenu.children['menu']
-        # m2 = self.popupMenu2.children['menu']
-        # #menu = dropdown['menu']
-        #
-        #
-        # for j in range(len(newVals)):
-        #     print newVals[j]
-        #     print j
-        #     m.entryconfig(j, label=newVals[j])
-            #m2.entryconfig(lastIndex+index, label=val)
+            self.popupMenu2.children['menu'].add_command(label=val, command=tk._setit(self.option2Var, val))
 
 
     def optionMenu_callback(self, *args):
@@ -884,35 +875,50 @@ class ComparePage(tk.Frame):
         f1 = open(fullName1, 'r')
         lines1 = f1.readlines()
 
+        fullName2 = appDataPath + compareTwo + '.txt'
+        print fullName2
+        f2 = open(fullName2, 'r')
+        lines2 = f2.readlines()
+
+        valListA2 = []
+        #valListB = []
+        valListC2 = []
+
         #Create empty arrays to store data
         valListA1 = []
         #valListB = []
         valListC1 = []
 
         #Find amount of lines before 'DETAILS' word. Note comparison graphs have to be
-        #the same length
-        count = 0
+        #the same length. Need two counts in case they are slightly different so we can
+        #use the shorter one for both, but use independent ones for details
+        count1 = 0
+        count2 = 0
+
         for i in range(len(lines1)):
             leftCol = lines1[i].split(' ')[0]
             if leftCol == 'DETAILS':
-                count = i
+                count1 = i
                 break
 
+        for j in range(len(lines2)):
+            leftCol = lines2[j].split(' ')[0]
+            if leftCol == 'DETAILS':
+                count2 = j
+                break
+
+        if count1 > count2:
+            countToUse = count2
+        else:
+            countToUse = count1
+
         #Split up data based on column
-        for i in range(count):
+        for i in range(countToUse):
             valListA1.append(float(lines1[i].split(' ')[1]))
             #valListB.append(float(lines[i].split(' ')[1]))
             valListC1.append(float(lines1[i].split(' ')[2]))
 
-        fullName2 = appDataPath + compareTwo + '.txt'
-        print fullName2
-        f2 = open(fullName2, 'r')
-        lines2 = f2.readlines()
-        valListA2 = []
-        #valListB = []
-        valListC2 = []
-
-        for i in range(count):
+        for i in range(countToUse):
             valListA2.append(float(lines2[i].split(' ')[1]))
             #valListB.append(float(lines[i].split(' ')[1]))
             valListC2.append(float(lines2[i].split(' ')[2]))
@@ -920,38 +926,38 @@ class ComparePage(tk.Frame):
             totalTime = float(lines2[i].split(' ')[0])
 
         #Retrieve details but if they are blank write Not Set
-        clicksC1 = lines1[count+2]
+        clicksC1 = lines1[count1+2].strip()
         if clicksC1 == 'NA':
             clicksC1 = 'Not Set'
-        self.g1clicksc.set(clicksC1)
-        clicksR1 = lines1[count+4]
+        self.g1clicksc.set("Clicks(C): " + clicksC1)
+        clicksR1 = lines1[count1+4].strip()
         if clicksR1 == 'NA':
             clicksR1 = 'Not Set'
-        self.g1clicksr.set(clicksR1)
-        temp1 = lines1[count+6]
+        self.g1clicksr.set("Clicks(R): " + clicksR1)
+        temp1 = lines1[count1+6].strip()
         if temp1 == 'NA':
             temp1 = 'Not Set'
-        self.g1temp.set(temp1)
-        notes1 = lines1[count+8]
+        self.g1temp.set("Temp: " + temp1)
+        notes1 = lines1[count1+8].lstrip().rstrip()
         if notes1 == 'NA':
             notes1 = 'Not Set'
-        self.g1notes.set(notes1)
-        clicksC2 = lines2[count+2]
+        self.g1notes.set("Notes: " + notes1)
+        clicksC2 = lines2[count2+2].strip()
         if clicksC2 == 'NA':
             clicksC2 = 'Not Set'
-        self.g2clicksc.set(clicksC2)
-        clicksR2 = lines2[count+4]
+        self.g2clicksc.set("Clicks(C): " + clicksC2)
+        clicksR2 = lines2[count2+4].strip()
         if clicksR2 == 'NA':
             clicksR2 = 'Not Set'
-        self.g2clicksr.set(clicksR2)
-        temp2 = lines2[count+6]
+        self.g2clicksr.set("Clicks(R): "+ clicksR2)
+        temp2 = lines2[count2+6].strip()
         if temp2 == 'NA':
             temp2 = 'Not Set'
-        self.g2temp.set(temp2)
-        notes2 = lines2[count+8]
+        self.g2temp.set("Temp: " + temp2)
+        notes2 = lines2[count2+8].lstrip().rstrip()
         if notes2 == 'NA':
             notes2 = 'Not Set'
-        self.g12notes.set(notes2)
+        self.g2notes.set("Notes: " + notes2)
 
         #Set up graph
         incA = totalTime/float(len(valListA1))
@@ -998,7 +1004,7 @@ class ComparePage(tk.Frame):
         self.g2clicksc.set("")
         self.g2clicksr.set("")
         self.g2temp.set("")
-        self.g12notes.set("")
+        self.g2notes.set("")
 
         #Clear graph
         self.line1.set_data([],[])
