@@ -608,6 +608,8 @@ class StartPage(tk.Frame):
         self.e4txt.set("")
         self.e5txt.set("")
         self.saved.set("")
+        self.peakToTroughTxt.set("")
+        self.troughToPeakTxt.set("")
         self.e5.delete(1.0, END)
         print "reset"
         #valList = []
@@ -1062,6 +1064,10 @@ class ComparePage(tk.Frame):
         self.g2clicksr.set("")
         self.g2temp.set("")
         self.g2notes.set("")
+        self.pTT1Txt.set("")
+        self.tTP1Txt.set("")
+        self.pTT2Txt.set("")
+        self.tTP2Txt.set("")
 
         #Clear graph
         self.line1.set_data([],[])
@@ -1134,10 +1140,16 @@ class DataPage(tk.Frame):
         self.g1clicksr = tk.StringVar()
         self.g1temp = tk.StringVar()
         self.g1notes = tk.StringVar()
+        #Display peaks and troughs info
+        self.peakToTroughTxt = tk.StringVar()
+        self.troughToPeakTxt = tk.StringVar()
+
         self.graph1Heading = Label(plotFrame, textvariable=self.g1heading).grid(row=2, column=0,sticky=W)
         self.graph1clicksC = Label(plotFrame, textvariable=self.g1clicksc).grid(row=3, column=0, sticky=W)
         self.graph1clicks4 = Label(plotFrame, textvariable=self.g1clicksr).grid(row=4, column=0, sticky=W)
         self.graph1Temp = Label(plotFrame, textvariable=self.g1temp).grid(row=5, column=0, sticky=W)
+        self.data4 = Label(plotFrame, textvariable=self.peakToTroughTxt).grid(row=6, column=0, sticky=W)
+        self.data5 = Label(plotFrame, textvariable=self.troughToPeakTxt).grid(row=7, column=0, sticky=W)
         self.graph1Notes = Label(plotFrame, textvariable=self.g1notes).grid(row=2, column=1, columnspan=2, sticky=W)
 
         #Get list of filenames from appdata folder
@@ -1297,6 +1309,10 @@ class DataPage(tk.Frame):
         if notes1 == 'NA':
             notes1 = 'Not Set'
         self.g1notes.set("Notes: " + notes1)
+        pTT = lines1[count+10].lstrip().rstrip()
+        tTP = lines1[count+12].lstrip().rstrip()
+        self.peakToTroughTxt.set(pTT)
+        self.troughToPeakTxt.set(tTP)
 
         #Set up graph
         incA = totalTime/float(len(valListA))
@@ -1325,8 +1341,28 @@ class DataPage(tk.Frame):
         ax.set_xlim(min(tA), max(tA))
         self.canvas.draw()
 
+    def resetGraph(self):
+        self.g1heading.set("")
+        self.g1clicksc.set("")
+        self.g1clicksr.set("")
+        self.g1temp.set("")
+        self.g1notes.set("")
+        self.peakToTroughTxt.set("")
+        self.troughToPeakTxt.set("")
+        self.line1.set_data([],[])
+        self.line2.set_data([],[])
+        self.line3.set_data([],[])
+        self.PtTPeak.set_data([],[])
+        self.PtTTrough.set_data([],[])
+        self.TtPPeak.set_data([],[])
+        self.TtPTrough.set_data([],[])
+        ax = self.canvas.figure.axes[0]
+        self.canvas.draw()
+
     def deleteGraph(self):
-        pass
+        os.remove(appDataPath + self.option1Var.get() + '.txt')
+        self.resetGraph()
+        self.updateVals()
 
 
 
