@@ -192,6 +192,18 @@ def saveDataAsTxt(fileName, valListA, valListB, valListC, tA, extraVals):
     else:
         F.write('NA')
     F.write('\n')
+    F.write('PtT \n')
+    if (len(extraVals[4].strip()) > 0):
+        F.write(extraVals[4])
+    else:
+        F.write('NA')
+    F.write('\n')
+    F.write('TtP \n')
+    if (len(extraVals[5].strip()) > 0):
+        F.write(extraVals[5])
+    else:
+        F.write('NA')
+    F.write('\n')
     F.write('END')
 
 #Get data from serial port
@@ -314,7 +326,7 @@ class  App_Window(tk.Tk):
 
         self.frames = {}
 
-        for F in (StartPage, ComparePage):
+        for F in (StartPage, ComparePage, DataPage):
 
             frame = F(container, self)
 
@@ -344,7 +356,8 @@ class StartPage(tk.Frame):
                              # frame.tkraise()
         compareBtn = tk.Button(topFrame, text="COMPARE", padx=20, pady=10,
                             command=lambda: controller.show_frame(ComparePage))
-        dataBtn = tk.Button(topFrame, text="DATA", padx=20, pady=10)
+        dataBtn = tk.Button(topFrame, text="DATA", padx=20, pady=10,
+                            command=lambda: controller.show_frame(DataPage))
         homeBtn.grid(row=0, column=1)
         compareBtn.grid(row=0, column=2)
         dataBtn.grid(row=0, column=3)
@@ -449,10 +462,10 @@ class StartPage(tk.Frame):
                            textvariable=self.btn_text,command=self.OnButtonClick, padx=15, pady=8)
         self.btn_text.set("START")
 
-        if self.portNum.get() == '':
-            print "PORT SET IS "
-            print self.portNum.get()
-            self.startBtn.configure(state='disabled')
+        # if self.portNum.get() == '':
+        #     print "PORT SET IS "
+        #     print self.portNum.get()
+        #     self.startBtn.configure(state='disabled')
         self.startBtn.grid(row=12, column=0)
 
         self.btn_text2 = tk.StringVar()
@@ -514,6 +527,13 @@ class StartPage(tk.Frame):
         self.data2 = Label(plotFrame, textvariable=self.data2Txt).grid(row=5, column=0, sticky=W)
         self.data3 = Label(plotFrame, textvariable=self.data3Txt).grid(row=6, column=0, sticky=W)
 
+        #Display peaks and troughs info
+        self.peakToTroughTxt = tk.StringVar()
+        self.troughToPeakTxt = tk.StringVar()
+
+        self.data4 = Label(plotFrame, textvariable=self.peakToTroughTxt).grid(row=4, column=1, sticky=W)
+        self.data5 = Label(plotFrame, textvariable=self.troughToPeakTxt).grid(row=5, column=1, sticky=W)
+
     def refreshPorts(self):
         #Don't set a val, so user is forced to
         self.portNum.set('')
@@ -541,8 +561,11 @@ class StartPage(tk.Frame):
     def testTF_callback(self, *args):
         if self.testTF.get() == 1:
             self.testFlag = '1'
+            if self.portNum.get() == '':
+                self.startBtn.configure(state='disabled')
         else:
             self.testFlag = '0'
+            self.startBtn.configure(state='active')
 
     def portNum_callback(self, *args):
         if self.portNum.get() != '':
@@ -559,7 +582,9 @@ class StartPage(tk.Frame):
         gete3 = self.e3txt.get()
         gete4 = self.e4txt.get()
         gete5 = self.e5.get("1.0",END)
-        extraVals = [gete2, gete3, gete4, gete5]
+        getTimeA = self.peakToTroughTxt.get()
+        getTimeB = self.troughToPeakTxt.get()
+        extraVals = [gete2, gete3, gete4, gete5, getTimeA, getTimeB]
         saveDataAsTxt(self.fileName, self.tA, self.valListA, self.valListB, self.valListC, extraVals)
 
     def clearText(self, event):
@@ -621,6 +646,19 @@ class StartPage(tk.Frame):
         if (indexTtPTrough != None or valTtPTrough != None):
             self.TtPTrough.set_data(indexTtPTrough,valTtPTrough)
         ax = self.canvas.figure.axes[0]
+
+        try:
+            peakToTrough = indexTtPPeak - indexPtTPeak
+            self.peakToTroughTxt.set("Time peak to trough: " + str(peakToTrough) + "s")
+        except:
+            self.peakToTroughTxt.set("Time peak to trough: INVALID")
+
+        try:
+            troughToPeak = indexPtTTrough - indexTtPTrough
+            self.troughToPeakTxt.set("Time trough to peak: " + str(troughToPeak) + "s")
+        except:
+            self.troughToPeakTxt.set("Time trough to peak: INVALID")
+
 
         ax.yaxis.set_minor_locator(minorLocatory)
         ax.xaxis.set_minor_locator(minorLocator)
@@ -699,7 +737,8 @@ class ComparePage(tk.Frame):
         compareBtn = tk.Button(topFrame, text="COMPARE", padx=20, pady=10,
                             command=lambda: controller.show_frame(ComparePage))
         compareBtn.config(relief=SUNKEN)
-        dataBtn = tk.Button(topFrame, text="DATA", padx=20, pady=10)
+        dataBtn = tk.Button(topFrame, text="DATA", padx=20, pady=10,
+                            command=lambda: controller.show_frame(DataPage))
         homeBtn.grid(row=0, column=1)
         compareBtn.grid(row=0, column=2)
         dataBtn.grid(row=0, column=3)
@@ -740,22 +779,30 @@ class ComparePage(tk.Frame):
         self.g1clicksr = tk.StringVar()
         self.g1temp = tk.StringVar()
         self.g1notes = tk.StringVar()
+        self.pTT1Txt = tk.StringVar()
+        self.tTP1Txt = tk.StringVar()
         self.graph1Heading = Label(plotFrame, textvariable=self.g1heading).grid(row=2, column=0,sticky=W)
         self.graph1clicksC = Label(plotFrame, textvariable=self.g1clicksc).grid(row=3, column=0, sticky=W)
         self.graph1clicks4 = Label(plotFrame, textvariable=self.g1clicksr).grid(row=4, column=0, sticky=W)
         self.graph1Temp = Label(plotFrame, textvariable=self.g1temp).grid(row=5, column=0, sticky=W)
         self.graph1Notes = Label(plotFrame, textvariable=self.g1notes).grid(row=2, column=1, columnspan=2, sticky=W)
+        self.pTT1 = Label(plotFrame, textvariable=self.pTT1Txt).grid(row=6, column=0, sticky=W)
+        self.tTP1 = Label(plotFrame, textvariable=self.tTP1Txt).grid(row=7, column=0, sticky=W)
 
         self.g2heading = tk.StringVar()
         self.g2clicksc = tk.StringVar()
         self.g2clicksr = tk.StringVar()
         self.g2temp = tk.StringVar()
         self.g2notes = tk.StringVar()
+        self.pTT2Txt = tk.StringVar()
+        self.tTP2Txt = tk.StringVar()
         self.graph2Heading = Label(plotFrame, textvariable=self.g2heading).grid(row=2, column=3, sticky=W)
         self.graph2clicksC = Label(plotFrame, textvariable=self.g2clicksc).grid(row=3, column=3, sticky=W)
         self.graph2clicks4 = Label(plotFrame, textvariable=self.g2clicksr).grid(row=4, column=3, sticky=W)
         self.graph2Temp = Label(plotFrame, textvariable=self.g2temp).grid(row=5, column=3, sticky=W)
         self.graph2Notes = Label(plotFrame, textvariable=self.g2notes).grid(row=2, column=4, columnspan=2, sticky=W)
+        self.pTT2 = Label(plotFrame, textvariable=self.pTT2Txt).grid(row=6, column=3, sticky=W)
+        self.tTP2 = Label(plotFrame, textvariable=self.tTP2Txt).grid(row=7, column=3, sticky=W)
 
         #Get list of filenames from appdata folder
         self.savedValues = os.listdir(appDataPath)
@@ -959,6 +1006,16 @@ class ComparePage(tk.Frame):
             notes2 = 'Not Set'
         self.g2notes.set("Notes: " + notes2)
 
+        pTT1 = lines1[count1+10].lstrip().rstrip()
+        pTT2 = lines2[count2+10].lstrip().rstrip()
+        tTP1 = lines1[count1+12].lstrip().rstrip()
+        tTP2 = lines2[count2+12].lstrip().rstrip()
+
+        self.pTT1Txt.set(pTT1)
+        self.pTT2Txt.set(pTT2)
+        self.tTP1Txt.set(tTP1)
+        self.tTP2Txt.set(tTP2)
+
         #Set up graph
         incA = totalTime/float(len(valListA1))
         tA= np.arange(0.0, totalTime, incA)
@@ -1013,6 +1070,264 @@ class ComparePage(tk.Frame):
         self.line4.set_data([],[])
         ax = self.canvas.figure.axes[0]
         self.canvas.draw()
+
+class DataPage(tk.Frame):
+
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self,parent)
+        self.parent = parent
+        topFrame = Frame(self)
+        topFrame.pack(side="top", fill="both")
+        # homeBtn = tk.Button(topFrame, text="HOME", padx=20, pady=10,
+        #                      command=lambda: self.show_frame(StartPage))
+        homeBtn = tk.Button(topFrame, text="HOME", padx=20, pady=10, state=ACTIVE,
+                             command=lambda: controller.show_frame(StartPage))
+                             # frame.tkraise()
+        compareBtn = tk.Button(topFrame, text="COMPARE", padx=20, pady=10,
+                            command=lambda: controller.show_frame(ComparePage))
+        dataBtn = tk.Button(topFrame, text="DATA", padx=20, pady=10)
+        dataBtn.config(relief=SUNKEN)
+        homeBtn.grid(row=0, column=1)
+        compareBtn.grid(row=0, column=2)
+        dataBtn.grid(row=0, column=3)
+
+        self.initialize()
+
+
+    def initialize(self):
+        #Grey line that separates menu
+        menuSeparator = Frame(self, height=1, bg="grey", pady=20).pack(side="top", fill="both")
+
+        #Left frame that holds comparison list
+        listFrame = Frame(self)
+        listFrame.pack(side="left", fill="both", padx=10, pady=10)
+
+        #Right frame that holds plot
+        plotFrame = Frame(self)
+        plotFrame.pack(side="right", fill="both", expand = True, padx=40, pady=10)
+        Label(plotFrame, text="VIEW RESULT").grid(row=0, column=0, sticky=W)
+        self.f = Figure(figsize=(6,4), dpi=100)
+        a = self.f.add_subplot(111)
+
+        #Initialise x and y axes to 0
+        x = []
+        y = []
+
+        #Draw null lines that can be changed later. Colours must be set here.
+        self.line1, = a.plot(x,y,'r')
+        self.line2, = a.plot(x,y,'g')
+        self.line3, = a.plot(x,y,'b')
+        #Create dots to show peak to trough and trough to peak
+        self.PtTPeak, = a.plot([],[],'mx')
+        self.PtTTrough, = a.plot([],[],'mx')
+        self.TtPPeak, = a.plot([],[],'mx')
+        self.TtPTrough, = a.plot([],[],'mx')
+
+        self.canvas = FigureCanvasTkAgg(self.f, plotFrame)
+        self.canvas.show()
+        self.canvas._tkcanvas.grid(row=1, column=0, columnspan=6, pady=8)
+        self.update
+
+        #Create blank fields for data to sit in and variables to be reset
+        self.g1heading = tk.StringVar()
+        self.g1clicksc = tk.StringVar()
+        self.g1clicksr = tk.StringVar()
+        self.g1temp = tk.StringVar()
+        self.g1notes = tk.StringVar()
+        self.graph1Heading = Label(plotFrame, textvariable=self.g1heading).grid(row=2, column=0,sticky=W)
+        self.graph1clicksC = Label(plotFrame, textvariable=self.g1clicksc).grid(row=3, column=0, sticky=W)
+        self.graph1clicks4 = Label(plotFrame, textvariable=self.g1clicksr).grid(row=4, column=0, sticky=W)
+        self.graph1Temp = Label(plotFrame, textvariable=self.g1temp).grid(row=5, column=0, sticky=W)
+        self.graph1Notes = Label(plotFrame, textvariable=self.g1notes).grid(row=2, column=1, columnspan=2, sticky=W)
+
+        #Get list of filenames from appdata folder
+        self.savedValues = os.listdir(appDataPath)
+
+        #New array to hold easier to read list (cut off extension)
+        self.newVals = []
+        for index, value in enumerate(self.savedValues):
+            value = value.split('.')[0]
+            self.newVals.append(value)
+
+        #Create dynamic option variables for dropdown and monitor when they are changed
+        self.option1Var = tk.StringVar()
+        self.option1Var.trace("w", self.optionMenu_callback)
+
+        #Create popup menus
+        self.popupMenu = OptionMenu(listFrame, self.option1Var, *self.newVals)
+        self.popupMenu.configure(width=20)
+
+        #If there are more than 2 values, you can compare them, so set these to the first 2
+        #If not, set them to 'NA' and disable them
+        if len(self.newVals) > 2:
+            self.option1Var.set(self.newVals[0])
+        else:
+            self.popupMenu.configure(state="disabled")
+            self.option1Var.set('NA')
+        #Refresh button to check for new recordings
+        self.refreshBtn = tk.Button(listFrame, text="Refresh List",
+                           command=self.updateVals).grid(row=0, column=0, sticky=W)
+
+        #Grid headings and popup menus
+        Label(listFrame, text="Select recording to view").grid(row=1, column=0, sticky=W, pady=10, columnspan=3)
+        self.popupMenu.grid(row=2, column=0, columnspan=3)
+        #Only activate compare button if there are at least 2 items to compare
+        # if len(self.newVals) > 2:
+        if len(self.newVals) > 0:
+            self.viewBtn = tk.Button(listFrame, text="VIEW",
+                               command=self.viewGraph, padx=15, pady=8)
+        else:
+            self.viewBtn = tk.Button(listFrame,
+                               text="VIEW",
+                               command=self.self.viewGraph, state=DISABLED, padx=15, pady=8)
+            #Show message saying there are no recordings
+            Label(listFrame, text="You have no saved recordings yet :-(").grid(row=4, column=0, sticky=W, pady=10, columnspan=3)
+
+        #Reset button starts inactive and only becomes active after a comparison
+        self.deleteBtn = tk.Button(listFrame,
+                           text="DELETE",
+                           command=self.deleteGraph, state=DISABLED, padx=15, pady=8)
+
+        self.viewBtn.grid(row=3, column=0)
+        self.deleteBtn.grid(row=3, column=1)
+
+    def optionMenu_callback(self, *args):
+        pass
+
+    def updateVals(self):
+        oldVals = self.newVals
+        newList = os.listdir(appDataPath)
+        if len(self.savedValues) > 0:
+            self.option1Var.set(self.newVals[0])
+        else:
+            self.popupMenu.configure(state="disabled")
+            self.option1Var.set('NA')
+
+        #Work out new vals
+        newVals = []
+        for index, value in enumerate(newList):
+            value = value.split('.')[0]
+            newVals.append(value)
+
+        # Delete all old options
+        self.popupMenu.children['menu'].delete(0, 'end')
+
+        # Insert list of new options (tk._setit hooks them up to val)
+        for val in newVals:
+            self.popupMenu.children['menu'].add_command(label=val, command=tk._setit(self.option1Var, val))
+
+    def viewGraph(self):
+        #This function extracts the data from the 2 files and displays both on the graph
+        #It also deactivates the compare button and actives the reset button
+
+        #Disable compare button and dropdowns
+        # self.compareBtn.configure(state="disabled")
+        self.deleteBtn.configure(state="active")
+        # self.popupMenu.configure(state="disabled")
+        # self.popupMenu2.configure(state="disabled")
+
+        #Print headings
+        self.g1heading.set('RECORDING INFO')
+
+        #Get values from dropdown menu
+        compareOne = self.option1Var.get()
+
+        #Assemble full names of file path and read data
+        fullName1 = appDataPath + compareOne + '.txt'
+        f1 = open(fullName1, 'r')
+        lines1 = f1.readlines()
+
+        valListA = []
+        valListB = []
+        valListC = []
+
+
+        #Find amount of lines before 'DETAILS' word. Note comparison graphs have to be
+        #the same length. Need two counts in case they are slightly different so we can
+        #use the shorter one for both, but use independent ones for details
+        count = 0
+
+        for i in range(len(lines1)):
+            leftCol = lines1[i].split(' ')[0]
+            if leftCol == 'DETAILS':
+                count = i
+                break
+
+        #Split up data based on column
+        for i in range(count):
+            valListA.append(float(lines1[i].split(' ')[1]))
+            valListB.append(float(lines1[i].split(' ')[1]))
+            valListC.append(float(lines1[i].split(' ')[2]))
+            totalTime = float(lines1[i].split(' ')[0])
+
+        #Get peak to trough vals
+        PTs = peaksTroughs(valListA, totalTime)
+        indexPtTPeak = PTs[0][0]
+        valPtTPeak = PTs[0][1]
+        indexPtTTrough = PTs[1][0]
+        valPtTTrough = PTs[1][1]
+        indexTtPPeak = PTs[2][0]
+        valTtPPeak = PTs[2][1]
+        indexTtPTrough = PTs[3][0]
+        valTtPTrough = PTs[3][1]
+
+        if (indexPtTPeak != None or valPtTPeak != None):
+            self.PtTPeak.set_data(indexPtTPeak,valPtTPeak)
+        if (indexPtTTrough != None or valPtTTrough != None):
+            self.PtTTrough.set_data(indexPtTTrough,valPtTTrough)
+        if (indexTtPPeak != None or valTtPPeak != None):
+            self.TtPPeak.set_data(indexTtPPeak,valTtPPeak)
+        if (indexTtPTrough != None or valTtPTrough != None):
+            self.TtPTrough.set_data(indexTtPTrough,valTtPTrough)
+
+        #Retrieve details but if they are blank write Not Set
+        clicksC1 = lines1[count+2].strip()
+        if clicksC1 == 'NA':
+            clicksC1 = 'Not Set'
+        self.g1clicksc.set("Clicks(C): " + clicksC1)
+        clicksR1 = lines1[count+4].strip()
+        if clicksR1 == 'NA':
+            clicksR1 = 'Not Set'
+        self.g1clicksr.set("Clicks(R): " + clicksR1)
+        temp1 = lines1[count+6].strip()
+        if temp1 == 'NA':
+            temp1 = 'Not Set'
+        self.g1temp.set("Temp: " + temp1)
+        notes1 = lines1[count+8].lstrip().rstrip()
+        if notes1 == 'NA':
+            notes1 = 'Not Set'
+        self.g1notes.set("Notes: " + notes1)
+
+        #Set up graph
+        incA = totalTime/float(len(valListA))
+        tA= np.arange(0.0, totalTime, incA)
+
+        spacing = 0.1
+        spacingy = 80
+        minorLocator = MultipleLocator(spacing)
+        minorLocatory = MultipleLocator(spacingy)
+
+        minY = 0
+        maxY = 1024
+
+        #Set values
+        self.line1.set_data(tA,valListA)
+        self.line2.set_data(tA,valListB)
+        self.line3.set_data(tA,valListC)
+        ax = self.canvas.figure.axes[0]
+        ax.yaxis.set_minor_locator(minorLocatory)
+        ax.xaxis.set_minor_locator(minorLocator)
+
+        # Set grid to use minor tick locations.
+        ax.grid(True, which = 'minor')
+
+        ax.set_ylim(minY, maxY)
+        ax.set_xlim(min(tA), max(tA))
+        self.canvas.draw()
+
+    def deleteGraph(self):
+        pass
+
 
 
 
