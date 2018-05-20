@@ -18,11 +18,18 @@ import os
 import time
 from datetime import datetime
 
-#Create path for saving files
-appDataPath = os.getenv('LOCALAPPDATA') + '\\shockData\\'
+#Create paths for saving files
+# appDataPath = os.getenv('LOCALAPPDATA') + '\\shockData\\'
+appDataPath1 = os.getenv('LOCALAPPDATA') + '\\shockData\\2\\'
+appDataPath2 = os.getenv('LOCALAPPDATA') + '\\shockData\\3\\'
+appDataPath3 = os.getenv('LOCALAPPDATA') + '\\shockData\\4\\'
 configPath = os.getenv('LOCALAPPDATA') + '\\shockData\\config\\config.txt'
-if not os.path.exists(appDataPath):
-    os.makedirs(appDataPath)
+if not os.path.exists(appDataPath1):
+    os.makedirs(appDataPath1)
+if not os.path.exists(appDataPath2):
+    os.makedirs(appDataPath2)
+if not os.path.exists(appDataPath3):
+    os.makedirs(appDataPath3)
 if not os.path.exists(os.path.dirname(configPath)):
     os.makedirs(os.path.dirname(configPath))
     configFile = open(configPath, "w")
@@ -151,7 +158,7 @@ def peaksTroughs(valListA, totalTime):
     return [firstMax, nextMax, firstMin, nextMin]
 
 #Save data to text file
-def saveDataAsTxt(fileName, valListA, valListB, valListC, tA, extraVals):
+def saveDataAsTxt(fileName, valListA, valListB, valListC, tA, extraVals, timeVal):
     valListASave = np.array(valListA)
     valListBSave = np.array(valListB)
     valListCSave = np.array(valListC)
@@ -161,7 +168,12 @@ def saveDataAsTxt(fileName, valListA, valListB, valListC, tA, extraVals):
     dataSave = dataSave.T
     #Open a text file that is writable
 
-    fullPath = appDataPath + fileName
+    if timeVal == 2:
+        fullPath = appDataPath2 + fileName
+    elif timeVal == 3:
+        fullPath = appDataPath3 + fileName
+    else:
+        fullPath = appDataPath1 + fileName
     #with open(dataFilePath, 'w+') as datafile_id:
     with open(fullPath, 'w+') as datafile_id:
         np.savetxt(datafile_id, dataSave, fmt=['%s','%s','%s','%f'])
@@ -207,7 +219,15 @@ def saveDataAsTxt(fileName, valListA, valListB, valListC, tA, extraVals):
     F.write('END')
 
 #Get data from serial port
-def runLoop(fileName, testFlag, port):
+def runLoop(fileName, testFlag, port, timeSetting):
+    #Use time setting to decide length of loop
+    if timeSetting == 2:
+        loopVal = 10263
+    elif timeSetting == 3:
+        loopVal = 13881
+    else:
+        loopVal = 7000
+
     print "TEST FLAG IS " + testFlag
     if testFlag == '1':
         print "REAL TEST"
@@ -227,7 +247,7 @@ def runLoop(fileName, testFlag, port):
         #sendStop = bytes(stopCommand.encode('utf-8'))
         ser.write(startCommand)
         print("START RECORDING")
-        for i in range(7000):
+        for i in range(loopVal):
             valList.append(ser.readline())
         ser.write(stopCommand)
 
@@ -348,12 +368,10 @@ class StartPage(tk.Frame):
         self.parent = parent
         topFrame = Frame(self)
         topFrame.pack(side="top", fill="both")
-        # homeBtn = tk.Button(topFrame, text="HOME", padx=20, pady=10,
-        #                      command=lambda: self.show_frame(StartPage))
         homeBtn = tk.Button(topFrame, text="HOME", padx=20, pady=10, state=ACTIVE,
                              command=lambda: controller.show_frame(StartPage))
         homeBtn.config(relief=SUNKEN)
-                             # frame.tkraise()
+
         compareBtn = tk.Button(topFrame, text="COMPARE", padx=20, pady=10,
                             command=lambda: controller.show_frame(ComparePage))
         dataBtn = tk.Button(topFrame, text="DATA", padx=20, pady=10,
@@ -466,19 +484,27 @@ class StartPage(tk.Frame):
         #     print "PORT SET IS "
         #     print self.portNum.get()
         #     self.startBtn.configure(state='disabled')
-        self.startBtn.grid(row=12, column=0)
+
+        #Radio checkbutton to pick time, default to 2s
+        self.timeLabel = Label(frame, text="Choose a time. If no time is chosen, 2 seconds will be used.", wraplength=180, pady=10).grid(row=12, column=0, columnspan=3, sticky=W)
+        self.timeVal = IntVar()
+        self.r1 = Radiobutton(frame, text="2s", variable=self.timeVal, value=1).grid(row=13,column=0, sticky=W)
+        self.r2 = Radiobutton(frame, text="3s", variable=self.timeVal, value=2).grid(row=13,column=1, sticky=W)
+        self.r3 = Radiobutton(frame, text="4s", variable=self.timeVal, value=3).grid(row=13,column=2, sticky=W)
+
+        self.startBtn.grid(row=14, column=0)
 
         self.btn_text2 = tk.StringVar()
         self.resetBtn = tk.Button(frame,
                            textvariable=self.btn_text2,
                            command=self.resetGraph, state=DISABLED, padx=15, pady=8)
         self.btn_text2.set("RESET")
-        self.resetBtn.grid(row=12, column=1)
-        frame.grid_rowconfigure(12, minsize=50)
+        self.resetBtn.grid(row=14, column=1, sticky=E)
+        frame.grid_rowconfigure(14, minsize=50)
 
         #Error message for invalid port number
         self.errorMsgTxt = StringVar()
-        self.errorMsg = Label(frame, textvariable=self.errorMsgTxt).grid(row=13, columnspan=3)
+        self.errorMsg = Label(frame, textvariable=self.errorMsgTxt).grid(row=15, columnspan=3)
 
 
         plotFrame = Frame(self)
@@ -585,7 +611,7 @@ class StartPage(tk.Frame):
         getTimeA = self.peakToTroughTxt.get()
         getTimeB = self.troughToPeakTxt.get()
         extraVals = [gete2, gete3, gete4, gete5, getTimeA, getTimeB]
-        saveDataAsTxt(self.fileName, self.tA, self.valListA, self.valListB, self.valListC, extraVals)
+        saveDataAsTxt(self.fileName, self.tA, self.valListA, self.valListB, self.valListC, extraVals, self.timeVal.get())
 
     def clearText(self, event):
         self.e1.delete(0, "end")
@@ -672,6 +698,9 @@ class StartPage(tk.Frame):
         self.canvas.draw()
 
     def OnButtonClick(self):
+        #Get time setting
+        timeSetting = self.timeVal.get()
+
         self.errorMsgTxt.set("")
         self.startBtn.config(state='disabled')
         self.resetBtn.config(state='normal')
@@ -705,7 +734,7 @@ class StartPage(tk.Frame):
         #Wrap this in a try-except to catch port exceptions
         errorCode = 0
         try:
-        	values = runLoop(fileName, self.testFlag, self.portNumber)
+        	values = runLoop(fileName, self.testFlag, self.portNumber, timeSetting)
         except:
             print "ERROR"
             errorCode = 1
@@ -819,19 +848,23 @@ class ComparePage(tk.Frame):
         self.tTP2 = Label(plotFrame, textvariable=self.tTP2Txt).grid(row=7, column=3, sticky=W)
 
         #Get list of filenames from appdata folder
-        self.savedValues = os.listdir(appDataPath)
-
+        self.savedValues1 = os.listdir(appDataPath1)
+        self.savedValues2 = os.listdir(appDataPath2)
+        self.savedValues3 = os.listdir(appDataPath3)
         #New array to hold easier to read list (cut off extension)
         self.newVals = []
-        for index, value in enumerate(self.savedValues):
+        for index, value in enumerate(self.savedValues1):
             value = value.split('.')[0]
             self.newVals.append(value)
 
+        if len(self.newVals) == 0:
+            self.newVals = [""]
+
         #Create dynamic option variables for dropdown and monitor when they are changed
         self.option1Var = tk.StringVar()
-        self.option1Var.trace("w", self.optionMenu_callback)
+        #self.option1Var.trace("w", self.optionMenu_callback)
         self.option2Var = tk.StringVar()
-        self.option2Var.trace("w", self.optionMenu_callback)
+        #self.option2Var.trace("w", self.optionMenu_callback)
 
         #Create popup menus
         self.popupMenu = OptionMenu(listFrame, self.option1Var, *self.newVals)
@@ -852,13 +885,21 @@ class ComparePage(tk.Frame):
 
         #Refresh button to check for new recordings
         self.refreshBtn = tk.Button(listFrame, text="Refresh List",
-                           command=self.updateVals).grid(row=0, column=0, sticky=W)
+                           command=self.updateVals(self)).grid(row=0, column=0, sticky=W)
+        self.timeLabel = Label(listFrame, text="Choose a time. If no time is chosen, 2 seconds will be used.", wraplength=180, pady=10).grid(row=1, column=0, columnspan=3)
+
+        #Select which timings to compare
+        self.timeVal = IntVar()
+        self.timeVal.trace("w", self.timeVal_callback)
+        self.r1 = Radiobutton(listFrame, text="2s", variable=self.timeVal, value=1).grid(row=2,column=0, sticky=W)
+        self.r2 = Radiobutton(listFrame, text="3s", variable=self.timeVal, value=2).grid(row=2,column=1, sticky=W)
+        self.r3 = Radiobutton(listFrame, text="4s", variable=self.timeVal, value=3).grid(row=2,column=2, sticky=W)
 
         #Grid headings and popup menus
-        Label(listFrame, text="Select first recording").grid(row=1, column=0, sticky=W, pady=10, columnspan=3)
-        self.popupMenu.grid(row=2, column=0, columnspan=3)
-        Label(listFrame, text="Select second recording").grid(row=3, column=0, sticky=W, pady=10, columnspan=3)
-        self.popupMenu2.grid(row=4, column=0, columnspan=3)
+        Label(listFrame, text="Select first recording").grid(row=3, column=0, sticky=W, pady=10, columnspan=3)
+        self.popupMenu.grid(row=4, column=0, columnspan=3)
+        Label(listFrame, text="Select second recording").grid(row=5, column=0, sticky=W, pady=10, columnspan=3)
+        self.popupMenu2.grid(row=6, column=0, columnspan=3)
 
         #Only activate compare button if there are at least 2 items to compare
         # if len(self.newVals) > 2:
@@ -870,23 +911,45 @@ class ComparePage(tk.Frame):
                                text="COMPARE",
                                command=self.compareGraphs, state=DISABLED, padx=15, pady=8)
             #Show message saying there are no recordings
-            Label(listFrame, text="You have no saved recordings yet :-(").grid(row=6, column=0, sticky=W, pady=10, columnspan=3)
+            Label(listFrame, text="You have no saved recordings yet :-(").grid(row=8, column=0, sticky=W, pady=10, columnspan=3)
 
         #Reset button starts inactive and only becomes active after a comparison
         self.resetBtn = tk.Button(listFrame,
                            text="RESET",
                            command=self.resetGraphs, state=DISABLED, padx=15, pady=8)
 
-        self.compareBtn.grid(row=5, column=0)
-        self.resetBtn.grid(row=5, column=1)
-        listFrame.grid_rowconfigure(5, minsize=100)
+        self.compareBtn.grid(row=7, column=0)
+        self.resetBtn.grid(row=7, column=1)
+        listFrame.grid_rowconfigure(7, minsize=100)
 
-    def updateVals(self):
-        oldVals = self.newVals
-        newList = os.listdir(appDataPath)
+    def timeVal_callback(self, *args):
+        self.updateVals(self.timeVal.get())
+
+    def updateVals(self, timeVal):
+
+        if timeVal == 2:
+            newList = os.listdir(appDataPath2)
+            self.savedValues = self.savedValues2
+        elif timeVal == 3:
+            newList = os.listdir(appDataPath3)
+            self.savedValues = self.savedValues3
+        else:
+            newList = os.listdir(appDataPath1)
+            self.savedValues = self.savedValues1
+
+        oldVals = []
+        for index, value in enumerate(self.savedValues):
+            value = value.split('.')[0]
+            oldVals.append(value)
+
+        if len(oldVals) == 0:
+            oldVals = [""]
+
         if len(self.savedValues) > 2:
-            self.option1Var.set(self.newVals[0])
-            self.option2Var.set(self.newVals[1])
+            self.popupMenu.configure(state="active")
+            self.popupMenu2.configure(state="active")
+            self.option1Var.set(oldVals[0])
+            self.option2Var.set(oldVals[1])
         else:
             self.popupMenu.configure(state="disabled")
             self.popupMenu2.configure(state="disabled")
@@ -909,13 +972,18 @@ class ComparePage(tk.Frame):
             self.popupMenu2.children['menu'].add_command(label=val, command=tk._setit(self.option2Var, val))
 
 
-    def optionMenu_callback(self, *args):
-        # self.savedValues = os.listdir(appDataPath)
-        print "CHANGES"
+    # def optionMenu_callback(self, *args):
+    #     print "CHANGES"
 
     def compareGraphs(self):
         #This function extracts the data from the 2 files and displays both on the graph
         #It also deactivates the compare button and actives the reset button
+        if self.timeVal.get() == 2:
+            appDataPath = appDataPath2
+        elif self.timeVal.get() == 3:
+            appDataPath = appDataPath3
+        else:
+            appDataPath = appDataPath1
 
         #Disable compare button and dropdowns
         self.compareBtn.configure(state="disabled")
@@ -1212,14 +1280,29 @@ class DataPage(tk.Frame):
         self.data5 = Label(plotFrame, textvariable=self.troughToPeakTxt).grid(row=7, column=0, sticky=W)
         self.graph1Notes = Label(plotFrame, textvariable=self.g1notes).grid(row=2, column=1, columnspan=2, sticky=W)
 
+        #Time option
+        self.timeLabel = Label(listFrame, text="Choose a time. If no time is chosen, 2 seconds will be used.", wraplength=180, pady=10).grid(row=1, column=0, columnspan=3)
+
+        self.timeVal = IntVar()
+        self.timeVal.trace("w", self.timeVal_callback)
+        self.r1 = Radiobutton(listFrame, text="2s", variable=self.timeVal, value=1).grid(row=2,column=0, sticky=W)
+        self.r2 = Radiobutton(listFrame, text="3s", variable=self.timeVal, value=2).grid(row=2,column=1, sticky=W)
+        self.r3 = Radiobutton(listFrame, text="4s", variable=self.timeVal, value=3).grid(row=2,column=2, sticky=W)
+
+
         #Get list of filenames from appdata folder
-        self.savedValues = os.listdir(appDataPath)
+        self.savedValues1 = os.listdir(appDataPath1)
+        self.savedValues2 = os.listdir(appDataPath2)
+        self.savedValues3 = os.listdir(appDataPath3)
 
         #New array to hold easier to read list (cut off extension)
         self.newVals = []
-        for index, value in enumerate(self.savedValues):
+        for index, value in enumerate(self.savedValues1):
             value = value.split('.')[0]
             self.newVals.append(value)
+
+        if len(self.newVals) == 0:
+            self.newVals = [""]
 
         #Create dynamic option variables for dropdown and monitor when they are changed
         self.option1Var = tk.StringVar()
@@ -1231,18 +1314,18 @@ class DataPage(tk.Frame):
 
         #If there are more than 2 values, you can compare them, so set these to the first 2
         #If not, set them to 'NA' and disable them
-        if len(self.newVals) > 2:
+        if len(self.newVals) > 0:
             self.option1Var.set(self.newVals[0])
         else:
             self.popupMenu.configure(state="disabled")
             self.option1Var.set('NA')
         #Refresh button to check for new recordings
         self.refreshBtn = tk.Button(listFrame, text="Refresh List",
-                           command=self.updateVals).grid(row=0, column=0, sticky=W)
+                           command=self.updateVals(self.timeVal.get())).grid(row=0, column=0, sticky=W)
 
         #Grid headings and popup menus
-        Label(listFrame, text="Select recording to view").grid(row=1, column=0, sticky=W, pady=10, columnspan=3)
-        self.popupMenu.grid(row=2, column=0, columnspan=3)
+        Label(listFrame, text="Select recording to view").grid(row=3, column=0, sticky=W, pady=10, columnspan=3)
+        self.popupMenu.grid(row=4, column=0, columnspan=3)
         #Only activate compare button if there are at least 2 items to compare
         # if len(self.newVals) > 2:
         if len(self.newVals) > 0:
@@ -1253,24 +1336,46 @@ class DataPage(tk.Frame):
                                text="VIEW",
                                command=self.self.viewGraph, state=DISABLED, padx=15, pady=8)
             #Show message saying there are no recordings
-            Label(listFrame, text="You have no saved recordings yet :-(").grid(row=4, column=0, sticky=W, pady=10, columnspan=3)
+            Label(listFrame, text="You have no saved recordings yet :-(").grid(row=6, column=0, sticky=W, pady=10, columnspan=3)
 
         #Reset button starts inactive and only becomes active after a comparison
         self.deleteBtn = tk.Button(listFrame,
                            text="DELETE",
                            command=self.deleteGraph, state=DISABLED, padx=15, pady=8)
 
-        self.viewBtn.grid(row=3, column=0)
-        self.deleteBtn.grid(row=3, column=1)
+        self.viewBtn.grid(row=5, column=0)
+        self.deleteBtn.grid(row=5, column=1)
 
     def optionMenu_callback(self, *args):
         pass
 
-    def updateVals(self):
-        oldVals = self.newVals
-        newList = os.listdir(appDataPath)
+    def timeVal_callback(self, *args):
+        print "CALL BACK"
+        self.updateVals(self.timeVal.get())
+
+    def updateVals(self, timeVal):
+        print timeVal
+        if timeVal == 2:
+            newList = os.listdir(appDataPath2)
+            self.savedValues = self.savedValues2
+        elif timeVal == 3:
+            print "LIST 4"
+            newList = os.listdir(appDataPath3)
+            self.savedValues = self.savedValues3
+        else:
+            newList = os.listdir(appDataPath1)
+            self.savedValues = self.savedValues1
+
+        oldVals = []
+        for index, value in enumerate(self.savedValues):
+            value = value.split('.')[0]
+            oldVals.append(value)
+
+        if len(oldVals) == 0:
+            oldVals = [""]
+
         if len(self.savedValues) > 0:
-            self.option1Var.set(self.newVals[0])
+            self.option1Var.set(oldVals[0])
         else:
             self.popupMenu.configure(state="disabled")
             self.option1Var.set('NA')
@@ -1291,7 +1396,12 @@ class DataPage(tk.Frame):
     def viewGraph(self):
         #This function extracts the data from the 2 files and displays both on the graph
         #It also deactivates the compare button and actives the reset button
-
+        if self.timeVal.get() == 2:
+            appDataPath = appDataPath2
+        elif self.timeVal.get() == 3:
+            appDataPath = appDataPath3
+        else:
+            appDataPath = appDataPath1
         #Disable compare button and dropdowns
         # self.compareBtn.configure(state="disabled")
         self.deleteBtn.configure(state="active")
@@ -1438,9 +1548,15 @@ class DataPage(tk.Frame):
         self.canvas.draw()
 
     def deleteGraph(self):
+        if self.timeVal.get() == 2:
+            appDataPath = appDataPath2
+        elif self.timeVal.get == 3:
+            appDataPath = appDataPath3
+        else:
+            appDataPath = appDataPath1
         os.remove(appDataPath + self.option1Var.get() + '.txt')
         self.resetGraph()
-        self.updateVals()
+        self.updateVals(self.timeVal.get())
 
 
 
