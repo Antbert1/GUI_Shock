@@ -903,7 +903,7 @@ class ComparePage(tk.Frame):
 
         #Only activate compare button if there are at least 2 items to compare
         # if len(self.newVals) > 2:
-        if len(self.newVals) > 2:
+        if len(self.newVals) > 1:
             self.compareBtn = tk.Button(listFrame, text="COMPARE",
                                command=self.compareGraphs, padx=15, pady=8)
         else:
@@ -911,7 +911,7 @@ class ComparePage(tk.Frame):
                                text="COMPARE",
                                command=self.compareGraphs, state=DISABLED, padx=15, pady=8)
             #Show message saying there are no recordings
-            Label(listFrame, text="You have no saved recordings yet :-(").grid(row=8, column=0, sticky=W, pady=10, columnspan=3)
+            #Label(listFrame, text="You have no saved recordings yet :-(").grid(row=8, column=0, sticky=W, pady=10, columnspan=3)
 
         #Reset button starts inactive and only becomes active after a comparison
         self.resetBtn = tk.Button(listFrame,
@@ -926,7 +926,6 @@ class ComparePage(tk.Frame):
         self.updateVals(self.timeVal.get())
 
     def updateVals(self, timeVal):
-
         if timeVal == 2:
             newList = os.listdir(appDataPath2)
             self.savedValues = self.savedValues2
@@ -945,7 +944,7 @@ class ComparePage(tk.Frame):
         if len(oldVals) == 0:
             oldVals = [""]
 
-        if len(self.savedValues) > 2:
+        if len(self.savedValues) > 1:
             self.popupMenu.configure(state="active")
             self.popupMenu2.configure(state="active")
             self.option1Var.set(oldVals[0])
