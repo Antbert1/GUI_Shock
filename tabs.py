@@ -770,6 +770,18 @@ class ComparePage(tk.Frame):
         self.line2, = a.plot(x,y,'g')
         self.line3, = a.plot(x,y,'b')
         self.line4, = a.plot(x,y,'y')
+
+        #Show peaks and troughs
+        self.PtTPeak1, = a.plot([],[],'cx')
+        self.PtTTrough1, = a.plot([],[],'cx')
+        self.TtPPeak1, = a.plot([],[],'cx')
+        self.TtPTrough1, = a.plot([],[],'cx')
+
+        self.PtTPeak2, = a.plot([],[],'cx')
+        self.PtTTrough2, = a.plot([],[],'cx')
+        self.TtPPeak2, = a.plot([],[],'cx')
+        self.TtPTrough2, = a.plot([],[],'cx')
+
         self.canvas = FigureCanvasTkAgg(self.f, plotFrame)
         self.canvas.show()
         self.canvas._tkcanvas.grid(row=1, column=0, columnspan=6, pady=8)
@@ -974,6 +986,46 @@ class ComparePage(tk.Frame):
             #Total time is the last value on the 4th column
             totalTime = float(lines2[i].split(' ')[0])
 
+        #Get peaks and trough for both
+        PT1 = peaksTroughs(valListA1, totalTime)
+        PT2 = peaksTroughs(valListA2, totalTime)
+
+        indexPtTPeak1 = PT1[0][0]
+        valPtTPeak1 = PT1[0][1]
+        indexPtTTrough1 = PT1[1][0]
+        valPtTTrough1 = PT1[1][1]
+        indexTtPPeak1 = PT1[2][0]
+        valTtPPeak1 = PT1[2][1]
+        indexTtPTrough1 = PT1[3][0]
+        valTtPTrough1 = PT1[3][1]
+
+        indexPtTPeak2 = PT2[0][0]
+        valPtTPeak2 = PT2[0][1]
+        indexPtTTrough2 = PT2[1][0]
+        valPtTTrough2 = PT2[1][1]
+        indexTtPPeak2 = PT2[2][0]
+        valTtPPeak2 = PT2[2][1]
+        indexTtPTrough2 = PT2[3][0]
+        valTtPTrough2 = PT2[3][1]
+
+        if (indexPtTPeak1 != None or valPtTPeak1 != None):
+            self.PtTPeak1.set_data(indexPtTPeak1,valPtTPeak1)
+        if (indexPtTTrough1 != None or valPtTTrough1 != None):
+            self.PtTTrough1.set_data(indexPtTTrough1,valPtTTrough1)
+        if (indexTtPPeak1 != None or valTtPPeak1 != None):
+            self.TtPPeak1.set_data(indexTtPPeak1,valTtPPeak1)
+        if (indexTtPTrough1 != None or valTtPTrough1 != None):
+            self.TtPTrough1.set_data(indexTtPTrough1,valTtPTrough1)
+
+        if (indexPtTPeak2 != None or valPtTPeak2 != None):
+            self.PtTPeak2.set_data(indexPtTPeak2,valPtTPeak2)
+        if (indexPtTTrough2 != None or valPtTTrough2 != None):
+            self.PtTTrough2.set_data(indexPtTTrough2,valPtTTrough2)
+        if (indexTtPPeak2 != None or valTtPPeak2 != None):
+            self.TtPPeak2.set_data(indexTtPPeak2,valTtPPeak2)
+        if (indexTtPTrough2 != None or valTtPTrough2 != None):
+            self.TtPTrough2.set_data(indexTtPTrough2,valTtPTrough2)
+
         #Retrieve details but if they are blank write Not Set
         clicksC1 = lines1[count1+2].strip()
         if clicksC1 == 'NA':
@@ -1074,6 +1126,14 @@ class ComparePage(tk.Frame):
         self.line2.set_data([],[])
         self.line3.set_data([],[])
         self.line4.set_data([],[])
+        self.PtTPeak1.set_data([],[])
+        self.PtTTrough1.set_data([],[])
+        self.TtPPeak1.set_data([],[])
+        self.TtPTrough1.set_data([],[])
+        self.PtTPeak2.set_data([],[])
+        self.PtTTrough2.set_data([],[])
+        self.TtPPeak2.set_data([],[])
+        self.TtPTrough2.set_data([],[])
         ax = self.canvas.figure.axes[0]
         self.canvas.draw()
 
@@ -1293,24 +1353,42 @@ class DataPage(tk.Frame):
             self.TtPTrough.set_data(indexTtPTrough,valTtPTrough)
 
         #Retrieve details but if they are blank write Not Set
-        clicksC1 = lines1[count+2].strip()
+        try:
+            clicksC1 = lines1[count+2].strip()
+        except:
+            clicksC1 = 'NA'
         if clicksC1 == 'NA':
             clicksC1 = 'Not Set'
         self.g1clicksc.set("Clicks(C): " + clicksC1)
-        clicksR1 = lines1[count+4].strip()
+        try:
+            clicksR1 = lines1[count+4].strip()
+        except:
+            clicksR1 = 'NA'
         if clicksR1 == 'NA':
             clicksR1 = 'Not Set'
         self.g1clicksr.set("Clicks(R): " + clicksR1)
-        temp1 = lines1[count+6].strip()
+        try:
+            temp1 = lines1[count+6].strip()
+        except:
+            temp1 = 'NA'
         if temp1 == 'NA':
             temp1 = 'Not Set'
         self.g1temp.set("Temp: " + temp1)
-        notes1 = lines1[count+8].lstrip().rstrip()
+        try:
+            notes1 = lines1[count+8].lstrip().rstrip()
+        except:
+            notes1 = 'NA'
         if notes1 == 'NA':
             notes1 = 'Not Set'
         self.g1notes.set("Notes: " + notes1)
-        pTT = lines1[count+10].lstrip().rstrip()
-        tTP = lines1[count+12].lstrip().rstrip()
+        try:
+            pTT = lines1[count+10].lstrip().rstrip()
+        except:
+            pTT = 'NA'
+        try:
+            tTP = lines1[count+12].lstrip().rstrip()
+        except:
+            tTP = 'NA'
         self.peakToTroughTxt.set(pTT)
         self.troughToPeakTxt.set(tTP)
 
