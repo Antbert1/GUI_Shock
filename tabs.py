@@ -227,13 +227,6 @@ def saveDataAsTxt(fileName, valListA, valListB, valListC, tA, extraVals, timeVal
         F.write('NA')
     F.write('\n')
 
-    F.write("NOTES \n")
-    if (len(extraVals[5].strip()) > 0):
-        F.write(extraVals[5].rstrip())
-    else:
-        F.write('NA')
-    F.write('\n')
-
     F.write('PtT \n')
     if (len(extraVals[7].strip()) > 0):
         F.write(extraVals[7])
@@ -244,6 +237,13 @@ def saveDataAsTxt(fileName, valListA, valListB, valListC, tA, extraVals, timeVal
     F.write('TtP \n')
     if (len(extraVals[8].strip()) > 0):
         F.write(extraVals[8])
+    else:
+        F.write('NA')
+
+    F.write('\n')
+    F.write("NOTES \n")
+    if (len(extraVals[5].strip()) > 0):
+        F.write(extraVals[5].rstrip())
     else:
         F.write('NA')
     F.write('\n')
@@ -890,33 +890,45 @@ class ComparePage(tk.Frame):
         #Create blank fields for data to sit in and variables to be reset
         self.g1heading = tk.StringVar()
         self.g1clicksc = tk.StringVar()
+        self.g1clickscH = tk.StringVar()
         self.g1clicksr = tk.StringVar()
+        self.g1clicksrH = tk.StringVar()
         self.g1temp = tk.StringVar()
+        self.g1pressure = tk.StringVar()
         self.g1notes = tk.StringVar()
         self.pTT1Txt = tk.StringVar()
         self.tTP1Txt = tk.StringVar()
         self.graph1Heading = Label(plotFrame, textvariable=self.g1heading).grid(row=2, column=0,sticky=W)
         self.graph1clicksC = Label(plotFrame, textvariable=self.g1clicksc).grid(row=3, column=0, sticky=W)
-        self.graph1clicks4 = Label(plotFrame, textvariable=self.g1clicksr).grid(row=4, column=0, sticky=W)
-        self.graph1Temp = Label(plotFrame, textvariable=self.g1temp).grid(row=5, column=0, sticky=W)
-        self.graph1Notes = Label(plotFrame, textvariable=self.g1notes, wraplength=190, justify=LEFT).grid(row=2, column=1, columnspan=2, rowspan=3, sticky=W)
-        self.pTT1 = Label(plotFrame, textvariable=self.pTT1Txt).grid(row=6, column=0, sticky=W)
-        self.tTP1 = Label(plotFrame, textvariable=self.tTP1Txt).grid(row=7, column=0, sticky=W)
+        self.graph1clicksCH = Label(plotFrame, textvariable=self.g1clickscH).grid(row=4, column=0, sticky=W)
+        self.graph1clicks4 = Label(plotFrame, textvariable=self.g1clicksr).grid(row=5, column=0, sticky=W)
+        self.graph1clicks4H = Label(plotFrame, textvariable=self.g1clicksrH).grid(row=6, column=0, sticky=W)
+        self.graph1Temp = Label(plotFrame, textvariable=self.g1temp).grid(row=7, column=0, sticky=W)
+        self.graph1Pressure = Label(plotFrame, textvariable=self.g1pressure).grid(row=8, column=0, sticky=W)
+        self.pTT1 = Label(plotFrame, textvariable=self.pTT1Txt).grid(row=9, column=0, sticky=W)
+        self.tTP1 = Label(plotFrame, textvariable=self.tTP1Txt).grid(row=10, column=0, sticky=W)
+        self.graph1Notes = Label(plotFrame, textvariable=self.g1notes,justify=LEFT).grid(row=11, column=0, columnspan=2,sticky=W)
 
         self.g2heading = tk.StringVar()
         self.g2clicksc = tk.StringVar()
+        self.g2clickscH = tk.StringVar()
         self.g2clicksr = tk.StringVar()
+        self.g2clicksrH = tk.StringVar()
         self.g2temp = tk.StringVar()
+        self.g2pressure = tk.StringVar()
         self.g2notes = tk.StringVar()
         self.pTT2Txt = tk.StringVar()
         self.tTP2Txt = tk.StringVar()
         self.graph2Heading = Label(plotFrame, textvariable=self.g2heading).grid(row=2, column=3, sticky=W)
         self.graph2clicksC = Label(plotFrame, textvariable=self.g2clicksc).grid(row=3, column=3, sticky=W)
-        self.graph2clicks4 = Label(plotFrame, textvariable=self.g2clicksr).grid(row=4, column=3, sticky=W)
-        self.graph2Temp = Label(plotFrame, textvariable=self.g2temp).grid(row=5, column=3, sticky=W)
-        self.graph2Notes = Label(plotFrame, textvariable=self.g2notes, wraplength=190, justify=LEFT).grid(row=2, column=4, columnspan=2, rowspan=3, sticky=W)
-        self.pTT2 = Label(plotFrame, textvariable=self.pTT2Txt).grid(row=6, column=3, sticky=W)
-        self.tTP2 = Label(plotFrame, textvariable=self.tTP2Txt).grid(row=7, column=3, sticky=W)
+        self.graph2clicksCH = Label(plotFrame, textvariable=self.g2clickscH).grid(row=4, column=3, sticky=W)
+        self.graph2clicks4 = Label(plotFrame, textvariable=self.g2clicksr).grid(row=5, column=3, sticky=W)
+        self.graph2clicks4H = Label(plotFrame, textvariable=self.g2clicksrH).grid(row=6, column=3, sticky=W)
+        self.graph2Temp = Label(plotFrame, textvariable=self.g2temp).grid(row=7, column=3, sticky=W)
+        self.graph2Pressure = Label(plotFrame, textvariable=self.g2pressure).grid(row=8, column=3, sticky=W)
+        self.graph2Notes = Label(plotFrame, textvariable=self.g2notes,justify=LEFT).grid(row=11, column=3, columnspan=2,sticky=W)
+        self.pTT2 = Label(plotFrame, textvariable=self.pTT2Txt).grid(row=9, column=3, sticky=W)
+        self.tTP2 = Label(plotFrame, textvariable=self.tTP2Txt).grid(row=10, column=3, sticky=W)
 
         #Get list of filenames from appdata folder
         self.savedValues1 = os.listdir(appDataPath1)
@@ -1061,10 +1073,6 @@ class ComparePage(tk.Frame):
         self.popupMenu.configure(state="disabled")
         self.popupMenu2.configure(state="disabled")
 
-        #Print headings
-        self.g1heading.set('FIRST RECORDING')
-        self.g2heading.set('SECOND RECORDING')
-
         #Get values from dropdown menu
         compareOne = self.option1Var.get()
         compareTwo = self.option2Var.get()
@@ -1164,44 +1172,89 @@ class ComparePage(tk.Frame):
         if (indexTtPTrough2 != None or valTtPTrough2 != None):
             self.TtPTrough2.set_data(indexTtPTrough2,valTtPTrough2)
 
+        #Print headings
+        timestamp1 = lines1[count1+1].strip()
+        timestamp2 = lines2[count2+1].strip()
+        self.g1heading.set(timestamp1)
+        self.g2heading.set(timestamp2)
+
         #Retrieve details but if they are blank write Not Set
-        clicksC1 = lines1[count1+2].strip()
+        clicksC1 = lines1[count1+3].strip()
         if clicksC1 == 'NA':
             clicksC1 = 'Not Set'
         self.g1clicksc.set("Clicks(C): " + clicksC1)
-        clicksR1 = lines1[count1+4].strip()
+
+        clicksC1H = lines1[count1+5].strip()
+        if clicksC1 == 'NA':
+            clicksC1 = 'Not Set'
+        self.g1clickscH.set("Clicks(C): " + clicksC1H)
+
+        clicksR1 = lines1[count1+7].strip()
         if clicksR1 == 'NA':
             clicksR1 = 'Not Set'
         self.g1clicksr.set("Clicks(R): " + clicksR1)
-        temp1 = lines1[count1+6].strip()
+
+        clicksR1H = lines1[count1+9].strip()
+        if clicksR1 == 'NA':
+            clicksR1 = 'Not Set'
+        self.g1clicksrH.set("Clicks(R): " + clicksR1H)
+
+        temp1 = lines1[count1+11].strip()
         if temp1 == 'NA':
             temp1 = 'Not Set'
         self.g1temp.set("Temp: " + temp1)
-        notes1 = lines1[count1+8].lstrip().rstrip()
+
+        pressure = lines1[count1+13].strip()
+        if pressure == 'NA':
+            pressure = 'Not Set'
+        self.g1pressure.set("Pressure: " + pressure)
+
+
+        notes1 = lines1[count1+19].lstrip().rstrip()
         if notes1 == 'NA':
             notes1 = 'Not Set'
         self.g1notes.set("Notes: " + notes1)
-        clicksC2 = lines2[count2+2].strip()
+
+
+        clicksC2 = lines2[count2+3].strip()
         if clicksC2 == 'NA':
             clicksC2 = 'Not Set'
         self.g2clicksc.set("Clicks(C): " + clicksC2)
-        clicksR2 = lines2[count2+4].strip()
+
+        clicksC2H = lines2[count2+5].strip()
+        if clicksC2 == 'NA':
+            clicksC2 = 'Not Set'
+        self.g2clickscH.set("Clicks(C): " + clicksC2)
+
+        clicksR2 = lines2[count2+7].strip()
         if clicksR2 == 'NA':
             clicksR2 = 'Not Set'
         self.g2clicksr.set("Clicks(R): "+ clicksR2)
-        temp2 = lines2[count2+6].strip()
+
+        clicksR2H = lines2[count2+9].strip()
+        if clicksR2H == 'NA':
+            clicksR2H = 'Not Set'
+        self.g2clicksrH.set("Clicks(R): " + clicksR2H)
+
+        temp2 = lines2[count2+11].strip()
         if temp2 == 'NA':
             temp2 = 'Not Set'
         self.g2temp.set("Temp: " + temp2)
-        notes2 = lines2[count2+8].lstrip().rstrip()
+
+        pressure2= lines2[count2+13].strip()
+        if pressure2 == 'NA':
+            pressure2 = 'Not Set'
+        self.g2pressure.set("Pressure: " + pressure2)
+
+        notes2 = lines2[count2+19].lstrip().rstrip()
         if notes2 == 'NA':
             notes2 = 'Not Set'
         self.g2notes.set("Notes: " + notes2)
 
-        pTT1 = lines1[count1+10].lstrip().rstrip()
-        pTT2 = lines2[count2+10].lstrip().rstrip()
-        tTP1 = lines1[count1+12].lstrip().rstrip()
-        tTP2 = lines2[count2+12].lstrip().rstrip()
+        pTT1 = lines1[count1+15].lstrip().rstrip()
+        pTT2 = lines2[count2+15].lstrip().rstrip()
+        tTP1 = lines1[count1+17].lstrip().rstrip()
+        tTP2 = lines2[count2+17].lstrip().rstrip()
 
         self.pTT1Txt.set(pTT1)
         self.pTT2Txt.set(pTT2)
@@ -1246,14 +1299,22 @@ class ComparePage(tk.Frame):
         #Reset text fields
         self.g1heading.set("")
         self.g1clicksc.set("")
+        self.g1clickscH.set("")
         self.g1clicksr.set("")
+        self.g1clicksrH.set("")
         self.g1temp.set("")
+        self.g1pressure.set("")
         self.g1notes.set("")
+
         self.g2heading.set("")
         self.g2clicksc.set("")
+        self.g2clickscH.set("")
         self.g2clicksr.set("")
+        self.g2clicksrH.set("")
         self.g2temp.set("")
+        self.g2pressure.set("")
         self.g2notes.set("")
+
         self.pTT1Txt.set("")
         self.tTP1Txt.set("")
         self.pTT2Txt.set("")
