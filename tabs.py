@@ -178,44 +178,76 @@ def saveDataAsTxt(fileName, valListA, valListB, valListC, tA, extraVals, timeVal
     with open(fullPath, 'w+') as datafile_id:
         np.savetxt(datafile_id, dataSave, fmt=['%s','%s','%s','%f'])
 
+    timeStamp = str(datetime.now())
     F = open(fullPath,'a')
     F.write("DETAILS \n")
+
+    F.write(timeStamp)
+    F.write('\n')
+
     F.write("CLICKSC \n")
     if (len(extraVals[0]) > 0):
         F.write(extraVals[0])
     else:
         F.write('NA')
     F.write('\n')
-    F.write("CLICKSR \n")
+
+    F.write("CLICKSCH \n")
     if (len(extraVals[1]) > 0):
         F.write(extraVals[1])
     else:
         F.write('NA')
     F.write('\n')
-    F.write("TEMP \n")
+
+    F.write("CLICKSR \n")
     if (len(extraVals[2]) > 0):
         F.write(extraVals[2])
     else:
         F.write('NA')
     F.write('\n')
-    F.write("NOTES \n")
-    if (len(extraVals[3].strip()) > 0):
+
+    F.write("CLICKSRH \n")
+    if (len(extraVals[3]) > 0):
         F.write(extraVals[3])
     else:
         F.write('NA')
     F.write('\n')
-    F.write('PtT \n')
-    if (len(extraVals[4].strip()) > 0):
+
+    F.write("TEMP \n")
+    if (len(extraVals[4]) > 0):
         F.write(extraVals[4])
     else:
         F.write('NA')
     F.write('\n')
-    F.write('TtP \n')
-    if (len(extraVals[5].strip()) > 0):
-        F.write(extraVals[5])
+
+    F.write("PRESSURE \n")
+    if (len(extraVals[6]) > 0):
+        F.write(extraVals[6])
     else:
         F.write('NA')
     F.write('\n')
+
+    F.write("NOTES \n")
+    if (len(extraVals[5].strip()) > 0):
+        F.write(extraVals[5].rstrip())
+    else:
+        F.write('NA')
+    F.write('\n')
+
+    F.write('PtT \n')
+    if (len(extraVals[7].strip()) > 0):
+        F.write(extraVals[7])
+    else:
+        F.write('NA')
+    F.write('\n')
+
+    F.write('TtP \n')
+    if (len(extraVals[8].strip()) > 0):
+        F.write(extraVals[8])
+    else:
+        F.write('NA')
+    F.write('\n')
+
     F.write('END')
 
 #Get data from serial port
@@ -447,30 +479,42 @@ class StartPage(tk.Frame):
         #Left-hand-side
         self.l1 = Label(frame, text="INPUT FIELDS").grid(row=1, sticky=W, columnspan=3)
 
-        self.l2 = Label(frame, text="Name *").grid(row=2, sticky=W, columnspan=3)
-        self.l3 = Label(frame, text="Clicks (C)").grid(row=4, sticky=W, columnspan=3)
-        self.l4 = Label(frame, text="Clicks (R)").grid(row=6, sticky=W, columnspan=3)
-        self.l5 = Label(frame, text="Temp").grid(row=8, sticky=W, columnspan=3)
-        self.l6 = Label(frame, text="Notes").grid(row=10, sticky=W, columnspan=3)
+        self.l2 = Label(frame, text="Name").grid(row=2, sticky=W, columnspan=3)
+        self.l3 = Label(frame, text="Clicks (C) - Low").grid(row=4, sticky=W, columnspan=3)
+        self.l3H = Label(frame, text="Clicks (C) - High").grid(row=6, sticky=W, columnspan=3)
+        self.l4 = Label(frame, text="Clicks (R) - Low").grid(row=8, sticky=W, columnspan=3)
+        self.l4H = Label(frame, text="Clicks (R) - High").grid(row=10, sticky=W, columnspan=3)
+        self.l5 = Label(frame, text="Temperature").grid(row=12, sticky=W, columnspan=3)
+        self.l7 = Label(frame, text="Pressure (bar)").grid(row=14, sticky=W, columnspan=3)
+        self.l6 = Label(frame, text="Notes").grid(row=16, sticky=W, columnspan=3)
         self.defaultName = tk.StringVar(frame, value='Timestamp')
         self.e2txt = tk.StringVar()
+        self.e2Htxt = tk.StringVar()
         self.e3txt = tk.StringVar()
+        self.e3Htxt = tk.StringVar()
         self.e4txt = tk.StringVar()
         self.e5txt = tk.StringVar()
+        self.e7txt = tk.StringVar()
 
         #Put timestamp as default value and clear it when clicked
         self.e1 = Entry(frame, width=30, textvariable=self.defaultName)
         self.e1.bind("<Button-1>", self.clearText)
         self.e2 = Entry(frame, width=30, textvariable=self.e2txt)
+        self.e2H = Entry(frame, width=30, textvariable=self.e2Htxt)
         self.e3 = Entry(frame, width=30, textvariable=self.e3txt)
+        self.e3H = Entry(frame, width=30, textvariable=self.e3Htxt)
         self.e4 = Entry(frame, width=30, textvariable=self.e4txt)
+        self.e7 = Entry(frame, width=30, textvariable=self.e7txt)
         self.e5 = Text(frame,width=23, height=5)
 
         self.e1.grid(row=3, column=0,sticky=W, columnspan=3)
         self.e2.grid(row=5, column=0,sticky=W, columnspan=3)
-        self.e3.grid(row=7, column=0,sticky=W, columnspan=3)
-        self.e4.grid(row=9, column=0,sticky=W, columnspan=3)
-        self.e5.grid(row=11, column=0,sticky=W, columnspan=3)
+        self.e2H.grid(row=7, column=0,sticky=W, columnspan=3)
+        self.e3.grid(row=9, column=0,sticky=W, columnspan=3)
+        self.e3H.grid(row=11, column=0,sticky=W, columnspan=3)
+        self.e4.grid(row=13, column=0,sticky=W, columnspan=3)
+        self.e7.grid(row=15, column=0,sticky=W, columnspan=3)
+        self.e5.grid(row=17, column=0,sticky=W, columnspan=3)
 
         self.btn_text = tk.StringVar()
         self.saveTxt = tk.StringVar()
@@ -480,31 +524,27 @@ class StartPage(tk.Frame):
                            textvariable=self.btn_text,command=self.OnButtonClick, padx=15, pady=8)
         self.btn_text.set("START")
 
-        # if self.portNum.get() == '':
-        #     print "PORT SET IS "
-        #     print self.portNum.get()
-        #     self.startBtn.configure(state='disabled')
 
         #Radio checkbutton to pick time, default to 2s
-        self.timeLabel = Label(frame, text="Choose a time. If no time is chosen, 2 seconds will be used.", wraplength=180, pady=10).grid(row=12, column=0, columnspan=3, sticky=W)
+        self.timeLabel = Label(frame, text="Choose a time. If no time is chosen, 2 seconds will be used.", wraplength=180, pady=10).grid(row=18, column=0, columnspan=3, sticky=W)
         self.timeVal = IntVar()
-        self.r1 = Radiobutton(frame, text="2s", variable=self.timeVal, value=1).grid(row=13,column=0, sticky=W)
-        self.r2 = Radiobutton(frame, text="3s", variable=self.timeVal, value=2).grid(row=13,column=1, sticky=W)
-        self.r3 = Radiobutton(frame, text="4s", variable=self.timeVal, value=3).grid(row=13,column=2, sticky=W)
+        self.r1 = Radiobutton(frame, text="2s", variable=self.timeVal, value=1).grid(row=19,column=0, sticky=W)
+        self.r2 = Radiobutton(frame, text="3s", variable=self.timeVal, value=2).grid(row=19,column=1, sticky=W)
+        self.r3 = Radiobutton(frame, text="4s", variable=self.timeVal, value=3).grid(row=19,column=2, sticky=W)
 
-        self.startBtn.grid(row=14, column=0)
+        self.startBtn.grid(row=20, column=0)
 
         self.btn_text2 = tk.StringVar()
         self.resetBtn = tk.Button(frame,
                            textvariable=self.btn_text2,
                            command=self.resetGraph, state=DISABLED, padx=15, pady=8)
         self.btn_text2.set("RESET")
-        self.resetBtn.grid(row=14, column=1, sticky=E)
-        frame.grid_rowconfigure(14, minsize=50)
+        self.resetBtn.grid(row=20, column=1, sticky=E)
+        frame.grid_rowconfigure(20, minsize=50)
 
         #Error message for invalid port number
         self.errorMsgTxt = StringVar()
-        self.errorMsg = Label(frame, textvariable=self.errorMsgTxt).grid(row=15, columnspan=3)
+        self.errorMsg = Label(frame, textvariable=self.errorMsgTxt).grid(row=21, columnspan=3)
 
 
         plotFrame = Frame(self)
@@ -546,19 +586,27 @@ class StartPage(tk.Frame):
         self.data1Txt = tk.StringVar()
         self.data2Txt = tk.StringVar()
         self.data3Txt = tk.StringVar()
+
+        self.clicksCHtxt = tk.StringVar()
+        self.clicksRHtxt = tk.StringVar()
+        self.pressureTxt = tk.StringVar()
+
         self.saved = tk.StringVar()
         self.savedTxt = Label(plotFrame, textvariable=self.saved).grid(row=3, column=0, sticky=W)
         # toolbar = NavigationToolbar2TkAgg(self.canvas, plotFrame).grid(row=2, column=0, columnspan=6, sticky=W)
         self.data1 = Label(plotFrame, textvariable=self.data1Txt).grid(row=4, column=0, sticky=W)
+        self.clicksCH = Label(plotFrame, textvariable=self.clicksCHtxt).grid(row=4, column=1, sticky=W)
         self.data2 = Label(plotFrame, textvariable=self.data2Txt).grid(row=5, column=0, sticky=W)
+        self.clicksRH = Label(plotFrame, textvariable=self.clicksRHtxt).grid(row=5, column=1, sticky=W)
         self.data3 = Label(plotFrame, textvariable=self.data3Txt).grid(row=6, column=0, sticky=W)
+        self.pressure = Label(plotFrame, textvariable=self.pressureTxt).grid(row=7, column=0, sticky=W)
 
         #Display peaks and troughs info
         self.peakToTroughTxt = tk.StringVar()
         self.troughToPeakTxt = tk.StringVar()
 
-        self.data4 = Label(plotFrame, textvariable=self.peakToTroughTxt).grid(row=4, column=1, sticky=W)
-        self.data5 = Label(plotFrame, textvariable=self.troughToPeakTxt).grid(row=5, column=1, sticky=W)
+        self.data4 = Label(plotFrame, textvariable=self.peakToTroughTxt).grid(row=4, column=2, sticky=W)
+        self.data5 = Label(plotFrame, textvariable=self.troughToPeakTxt).grid(row=5, column=2, sticky=W)
 
     def refreshPorts(self):
         #Don't set a val, so user is forced to
@@ -605,12 +653,15 @@ class StartPage(tk.Frame):
         self.saveBtn.config(state='disabled')
         self.discardBtn.config(state='disabled')
         gete2 = self.e2txt.get()
+        gete2H = self.e2Htxt.get()
         gete3 = self.e3txt.get()
+        gete3H = self.e3Htxt.get()
         gete4 = self.e4txt.get()
         gete5 = self.e5.get("1.0",END)
+        gete7 = self.e7txt.get()
         getTimeA = self.peakToTroughTxt.get()
         getTimeB = self.troughToPeakTxt.get()
-        extraVals = [gete2, gete3, gete4, gete5, getTimeA, getTimeB]
+        extraVals = [gete2, gete2H,gete3, gete3H, gete4, gete5, gete7, getTimeA, getTimeB]
         saveDataAsTxt(self.fileName, self.tA, self.valListA, self.valListB, self.valListC, extraVals, self.timeVal.get())
 
     def clearText(self, event):
@@ -627,13 +678,19 @@ class StartPage(tk.Frame):
         self.saveBtn.config(state='disabled')
         self.discardBtn.config(state='disabled')
         self.data1Txt.set("")
+        self.clicksCHtxt.set("")
         self.data2Txt.set("")
         self.data3Txt.set("")
+        self.clicksRHtxt.set("")
         self.e2txt.set("")
+        self.e2Htxt.set("")
         self.e3txt.set("")
+        self.e3Htxt.set("")
         self.e4txt.set("")
         self.e5txt.set("")
+        self.e7txt.set("")
         self.saved.set("")
+        self.pressureTxt.set("")
         self.peakToTroughTxt.set("")
         self.troughToPeakTxt.set("")
         self.e5.delete(1.0, END)
@@ -708,21 +765,35 @@ class StartPage(tk.Frame):
         self.discardBtn.config(state='normal')
         fileName = self.e1.get()
         clicks = self.e2.get()
+        clicksH = self.e2H.get()
         clicks2 = self.e3.get()
+        clicks2H = self.e3H.get()
+        pressure = self.e7.get()
         temp = self.e4.get()
         if (len(clicks) > 0):
-            self.data1Txt.set("Clicks(C): " + clicks)
+            self.data1Txt.set("Clicks(C) Low: " + clicks)
         else:
-            self.data1Txt.set("Clicks(C) not set")
+            self.data1Txt.set("Clicks(C) Low not set")
+        if (len(clicksH) > 0):
+            self.clicksCHtxt.set("Clicks(C) High: " + clicksH)
+        else:
+            self.clicksCHtxt.set("Clicks(C) Low not set")
         if (len(clicks2) > 0):
-            self.data2Txt.set("Clicks(R): " + clicks2)
+            self.data2Txt.set("Clicks(R) Low: " + clicks2)
         else:
-            self.data2Txt.set("Clicks(R) not set")
+            self.data2Txt.set("Clicks(R) Low not set")
+        if (len(clicks2H) > 0):
+            self.clicksRHtxt.set("Clicks(R) Low: " + clicks2H)
+        else:
+            self.clicksRHtxt.set("Clicks(R) Low not set")
         if (len(temp) > 0):
             self.data3Txt.set("Temperature: " + temp)
         else:
             self.data3Txt.set("Temperature not set")
-
+        if (len(pressure) > 0):
+            self.pressureTxt.set("Pressure: " + pressure)
+        else:
+            self.pressureTxt.set("Pressure not set")
         timeStampUnsplit = str(datetime.now())[0:19].split(' ')
         timeStamp = (timeStampUnsplit[0] + 'T' + timeStampUnsplit[1] + '.txt').replace(':', '-')
         print timeStamp
@@ -828,7 +899,7 @@ class ComparePage(tk.Frame):
         self.graph1clicksC = Label(plotFrame, textvariable=self.g1clicksc).grid(row=3, column=0, sticky=W)
         self.graph1clicks4 = Label(plotFrame, textvariable=self.g1clicksr).grid(row=4, column=0, sticky=W)
         self.graph1Temp = Label(plotFrame, textvariable=self.g1temp).grid(row=5, column=0, sticky=W)
-        self.graph1Notes = Label(plotFrame, textvariable=self.g1notes).grid(row=2, column=1, columnspan=2, sticky=W)
+        self.graph1Notes = Label(plotFrame, textvariable=self.g1notes, wraplength=190, justify=LEFT).grid(row=2, column=1, columnspan=2, rowspan=3, sticky=W)
         self.pTT1 = Label(plotFrame, textvariable=self.pTT1Txt).grid(row=6, column=0, sticky=W)
         self.tTP1 = Label(plotFrame, textvariable=self.tTP1Txt).grid(row=7, column=0, sticky=W)
 
@@ -843,7 +914,7 @@ class ComparePage(tk.Frame):
         self.graph2clicksC = Label(plotFrame, textvariable=self.g2clicksc).grid(row=3, column=3, sticky=W)
         self.graph2clicks4 = Label(plotFrame, textvariable=self.g2clicksr).grid(row=4, column=3, sticky=W)
         self.graph2Temp = Label(plotFrame, textvariable=self.g2temp).grid(row=5, column=3, sticky=W)
-        self.graph2Notes = Label(plotFrame, textvariable=self.g2notes).grid(row=2, column=4, columnspan=2, sticky=W)
+        self.graph2Notes = Label(plotFrame, textvariable=self.g2notes, wraplength=190, justify=LEFT).grid(row=2, column=4, columnspan=2, rowspan=3, sticky=W)
         self.pTT2 = Label(plotFrame, textvariable=self.pTT2Txt).grid(row=6, column=3, sticky=W)
         self.tTP2 = Label(plotFrame, textvariable=self.tTP2Txt).grid(row=7, column=3, sticky=W)
 
@@ -1277,7 +1348,7 @@ class DataPage(tk.Frame):
         self.graph1Temp = Label(plotFrame, textvariable=self.g1temp).grid(row=5, column=0, sticky=W)
         self.data4 = Label(plotFrame, textvariable=self.peakToTroughTxt).grid(row=6, column=0, sticky=W)
         self.data5 = Label(plotFrame, textvariable=self.troughToPeakTxt).grid(row=7, column=0, sticky=W)
-        self.graph1Notes = Label(plotFrame, textvariable=self.g1notes).grid(row=2, column=1, columnspan=2, sticky=W)
+        self.graph1Notes = Label(plotFrame, textvariable=self.g1notes,  wraplength=190, justify=LEFT).grid(row=2, column=1, columnspan=3, rowspan=3, sticky=W)
 
         #Time option
         self.timeLabel = Label(listFrame, text="Choose a time. If no time is chosen, 2 seconds will be used.", wraplength=180, pady=10).grid(row=1, column=0, columnspan=3)
@@ -1561,6 +1632,6 @@ class DataPage(tk.Frame):
 
 
 app =  App_Window()
-app.minsize(width=800, height=600)
+#app.minsize(width=840, height=600)
 app.resizable(width=False, height=False)
 app.mainloop()
