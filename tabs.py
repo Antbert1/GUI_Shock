@@ -1182,22 +1182,22 @@ class ComparePage(tk.Frame):
         clicksC1 = lines1[count1+3].strip()
         if clicksC1 == 'NA':
             clicksC1 = 'Not Set'
-        self.g1clicksc.set("Clicks(C): " + clicksC1)
+        self.g1clicksc.set("Clicks(C) Low: " + clicksC1)
 
         clicksC1H = lines1[count1+5].strip()
         if clicksC1 == 'NA':
             clicksC1 = 'Not Set'
-        self.g1clickscH.set("Clicks(C): " + clicksC1H)
+        self.g1clickscH.set("Clicks(C) High: " + clicksC1H)
 
         clicksR1 = lines1[count1+7].strip()
         if clicksR1 == 'NA':
             clicksR1 = 'Not Set'
-        self.g1clicksr.set("Clicks(R): " + clicksR1)
+        self.g1clicksr.set("Clicks(R) Low: " + clicksR1)
 
         clicksR1H = lines1[count1+9].strip()
         if clicksR1 == 'NA':
             clicksR1 = 'Not Set'
-        self.g1clicksrH.set("Clicks(R): " + clicksR1H)
+        self.g1clicksrH.set("Clicks(R) High: " + clicksR1H)
 
         temp1 = lines1[count1+11].strip()
         if temp1 == 'NA':
@@ -1219,22 +1219,22 @@ class ComparePage(tk.Frame):
         clicksC2 = lines2[count2+3].strip()
         if clicksC2 == 'NA':
             clicksC2 = 'Not Set'
-        self.g2clicksc.set("Clicks(C): " + clicksC2)
+        self.g2clicksc.set("Clicks(C) Low: " + clicksC2)
 
         clicksC2H = lines2[count2+5].strip()
         if clicksC2 == 'NA':
             clicksC2 = 'Not Set'
-        self.g2clickscH.set("Clicks(C): " + clicksC2)
+        self.g2clickscH.set("Clicks(C) High: " + clicksC2)
 
         clicksR2 = lines2[count2+7].strip()
         if clicksR2 == 'NA':
             clicksR2 = 'Not Set'
-        self.g2clicksr.set("Clicks(R): "+ clicksR2)
+        self.g2clicksr.set("Clicks(R) Low: "+ clicksR2)
 
         clicksR2H = lines2[count2+9].strip()
         if clicksR2H == 'NA':
             clicksR2H = 'Not Set'
-        self.g2clicksrH.set("Clicks(R): " + clicksR2H)
+        self.g2clicksrH.set("Clicks(R) High: " + clicksR2H)
 
         temp2 = lines2[count2+11].strip()
         if temp2 == 'NA':
@@ -1396,8 +1396,11 @@ class DataPage(tk.Frame):
         #Create blank fields for data to sit in and variables to be reset
         self.g1heading = tk.StringVar()
         self.g1clicksc = tk.StringVar()
+        self.g1clickscH = tk.StringVar()
         self.g1clicksr = tk.StringVar()
+        self.g1clicksrH = tk.StringVar()
         self.g1temp = tk.StringVar()
+        self.g1pressure = tk.StringVar()
         self.g1notes = tk.StringVar()
         #Display peaks and troughs info
         self.peakToTroughTxt = tk.StringVar()
@@ -1405,11 +1408,14 @@ class DataPage(tk.Frame):
 
         self.graph1Heading = Label(plotFrame, textvariable=self.g1heading).grid(row=2, column=0,sticky=W)
         self.graph1clicksC = Label(plotFrame, textvariable=self.g1clicksc).grid(row=3, column=0, sticky=W)
-        self.graph1clicks4 = Label(plotFrame, textvariable=self.g1clicksr).grid(row=4, column=0, sticky=W)
-        self.graph1Temp = Label(plotFrame, textvariable=self.g1temp).grid(row=5, column=0, sticky=W)
-        self.data4 = Label(plotFrame, textvariable=self.peakToTroughTxt).grid(row=6, column=0, sticky=W)
-        self.data5 = Label(plotFrame, textvariable=self.troughToPeakTxt).grid(row=7, column=0, sticky=W)
-        self.graph1Notes = Label(plotFrame, textvariable=self.g1notes,  wraplength=190, justify=LEFT).grid(row=2, column=1, columnspan=3, rowspan=3, sticky=W)
+        self.graph1clicksCH = Label(plotFrame, textvariable=self.g1clickscH).grid(row=4, column=0, sticky=W)
+        self.graph1clicks4 = Label(plotFrame, textvariable=self.g1clicksr).grid(row=5, column=0, sticky=W)
+        self.graph1clicks4H = Label(plotFrame, textvariable=self.g1clicksrH).grid(row=6, column=0, sticky=W)
+        self.graph1Temp = Label(plotFrame, textvariable=self.g1temp).grid(row=7, column=0, sticky=W)
+        self.graph1Pressure = Label(plotFrame, textvariable=self.g1pressure).grid(row=8, column=0, sticky=W)
+        self.data4 = Label(plotFrame, textvariable=self.peakToTroughTxt).grid(row=9, column=0, sticky=W)
+        self.data5 = Label(plotFrame, textvariable=self.troughToPeakTxt).grid(row=10, column=0, sticky=W)
+        self.graph1Notes = Label(plotFrame, textvariable=self.g1notes,justify=LEFT).grid(row=11, column=0, columnspan=2,sticky=W)
 
         #Time option
         self.timeLabel = Label(listFrame, text="Choose a time. If no time is chosen, 2 seconds will be used.", wraplength=180, pady=10).grid(row=1, column=0, columnspan=3)
@@ -1539,9 +1545,6 @@ class DataPage(tk.Frame):
         # self.popupMenu.configure(state="disabled")
         # self.popupMenu2.configure(state="disabled")
 
-        #Print headings
-        self.g1heading.set('RECORDING INFO')
-
         #Get values from dropdown menu
         compareOne = self.option1Var.get()
 
@@ -1553,7 +1556,6 @@ class DataPage(tk.Frame):
         valListA = []
         valListB = []
         valListC = []
-
 
         #Find amount of lines before 'DETAILS' word. Note comparison graphs have to be
         #the same length. Need two counts in case they are slightly different so we can
@@ -1593,41 +1595,73 @@ class DataPage(tk.Frame):
         if (indexTtPTrough != None or valTtPTrough != None):
             self.TtPTrough.set_data(indexTtPTrough,valTtPTrough)
 
+        #Print headings
+        timestamp = lines1[count+1].strip()
+        self.g1heading.set(timestamp)
+
         #Retrieve details but if they are blank write Not Set
         try:
-            clicksC1 = lines1[count+2].strip()
+            clicksC1 = lines1[count+3].strip()
         except:
             clicksC1 = 'NA'
         if clicksC1 == 'NA':
             clicksC1 = 'Not Set'
-        self.g1clicksc.set("Clicks(C): " + clicksC1)
+        self.g1clicksc.set("Clicks(C) Low: " + clicksC1)
+
         try:
-            clicksR1 = lines1[count+4].strip()
+            clicksC1H = lines1[count+5].strip()
+        except:
+            clicksC1H = 'NA'
+        if clicksC1H == 'NA':
+            clicksC1H = 'Not Set'
+        self.g1clickscH.set("Clicks(C) High: " + clicksC1H)
+
+        try:
+            clicksR1 = lines1[count+7].strip()
         except:
             clicksR1 = 'NA'
         if clicksR1 == 'NA':
             clicksR1 = 'Not Set'
-        self.g1clicksr.set("Clicks(R): " + clicksR1)
+        self.g1clicksr.set("Clicks(R) Low: " + clicksR1)
+
         try:
-            temp1 = lines1[count+6].strip()
+            clicksR1H = lines1[count+9].strip()
+        except:
+            clicksR1H = 'NA'
+        if clicksR1H == 'NA':
+            clicksR1H = 'Not Set'
+        self.g1clicksrH.set("Clicks(R) High: " + clicksR1H)
+
+        try:
+            temp1 = lines1[count+11].strip()
         except:
             temp1 = 'NA'
         if temp1 == 'NA':
             temp1 = 'Not Set'
-        self.g1temp.set("Temp: " + temp1)
+        self.g1temp.set("Temperature: " + temp1)
+
         try:
-            notes1 = lines1[count+8].lstrip().rstrip()
+            pressure = lines1[count+13].strip()
+        except:
+            pressure = 'NA'
+        if pressure == 'NA':
+            pressure = 'Not Set'
+        self.g1pressure.set("Pressure: " + pressure)
+
+        try:
+            notes1 = lines1[count+19].lstrip().rstrip()
         except:
             notes1 = 'NA'
         if notes1 == 'NA':
             notes1 = 'Not Set'
         self.g1notes.set("Notes: " + notes1)
+
         try:
-            pTT = lines1[count+10].lstrip().rstrip()
+            pTT = lines1[count+15].lstrip().rstrip()
         except:
             pTT = 'NA'
         try:
-            tTP = lines1[count+12].lstrip().rstrip()
+            tTP = lines1[count+17].lstrip().rstrip()
         except:
             tTP = 'NA'
         self.peakToTroughTxt.set(pTT)
@@ -1663,8 +1697,11 @@ class DataPage(tk.Frame):
     def resetGraph(self):
         self.g1heading.set("")
         self.g1clicksc.set("")
+        self.g1clickscH.set("")
         self.g1clicksr.set("")
+        self.g1clicksrH.set("")
         self.g1temp.set("")
+        self.g1pressure.set("")
         self.g1notes.set("")
         self.peakToTroughTxt.set("")
         self.troughToPeakTxt.set("")
